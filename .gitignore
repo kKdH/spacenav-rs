@@ -1,0 +1,14 @@
+*.o
+*.d
+*.swp
+*.a
+*.so
+*.so.*
+spnav_config.h
+Makefile
+examples/cube/cube
+examples/fly/fly
+examples/simple/simple_af_unix
+examples/simple/simple_x11
+spnav.pc
+doc/manual.html
