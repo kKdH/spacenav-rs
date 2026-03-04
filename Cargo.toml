@@ -1,0 +1,23 @@
+[workspace.package]
+version = "0.1.0"
+authors = ["Elmar Schug <elmar.schug@jayware.org>"]
+repository = "https://github.com/kKdH/spacenav-rs"
+keywords = []
+categories = []
+edition = "2024"
+rust-version = "1.93"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+googletest = { version = "0.14.*" }
+
+[workspace]
+members = [
+    "libspnav",
+    "spacenav"
+]
+
+resolver = "3"
+
+[profile.release]
+lto = "fat"
