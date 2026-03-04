@@ -22,3 +22,13 @@ include = [
 
 [package.metadata.docs.rs]
 all-features = true
+
+[dependencies]
+libspnav = { workspace = true }
+
+futures = { workspace = true }
+iced = { workspace = true, features = ["sipper"] }
+iced_aw = { workspace = true }
+
+[dev-dependencies]
+googletest = { workspace = true }

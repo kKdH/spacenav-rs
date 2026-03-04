@@ -23,15 +23,33 @@
         craneLib = (inputs.crane.mkLib pkgs).overrideToolchain (
           p: p.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml
         );
+        buildInputs = with pkgs; [
+          expat
+          fontconfig
+          freetype
+          freetype.dev
+          libGL
+          pkg-config
+          libx11
+          libxcursor
+          libxi
+          libxrandr
+          wayland
+          libxkbcommon
+        ];
       in
       {
         devShells.default = craneLib.devShell {
+          inherit buildInputs;
           packages = with pkgs; [
             bacon
             cargo-nextest
             clippy
-            probe-rs-tools
+            gcc
+            libclang
           ];
+          LIBCLANG_PATH = "${pkgs.lib.getLib pkgs.libclang}/lib";
+          LD_LIBRARY_PATH = builtins.foldl' (a: b: "${a}:${b}/lib") "${pkgs.vulkan-loader}/lib" buildInputs;
         };
         formatter = pkgs.nixfmt-rfc-style;
       }

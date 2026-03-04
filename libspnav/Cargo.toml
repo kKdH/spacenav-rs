@@ -22,3 +22,10 @@ include = [
 
 [package.metadata.docs.rs]
 all-features = true
+
+[build-dependencies]
+bindgen = { version = "0.72.*" }
+cc = { version = "1", features = ["parallel"] }
+
+[dev-dependencies]
+googletest = { workspace = true }

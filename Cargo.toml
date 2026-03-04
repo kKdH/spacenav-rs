@@ -5,19 +5,23 @@ repository = "https://github.com/kKdH/spacenav-rs"
 keywords = []
 categories = []
 edition = "2024"
-rust-version = "1.93"
+rust-version = "1.93.1"
 license = "Apache-2.0"
 
-[workspace.dependencies]
-googletest = { version = "0.14.*" }
-
 [workspace]
+resolver = "3"
 members = [
     "libspnav",
     "spacenav"
 ]
 
-resolver = "3"
+[workspace.dependencies]
+libspnav = { path = "libspnav" }
+
+futures = { version = "0.3.*" }
+googletest = { version = "0.14.*" }
+iced = { version = "0.14.*", features = ["debug"] }
+iced_aw = { version = "0.13.*" }
 
 [profile.release]
 lto = "fat"
