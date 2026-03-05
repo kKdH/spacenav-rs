@@ -1,3 +1,4 @@
+use crate::app::profiles::{load_profiles, store_profiles};
 use crate::app::widgets::axis_bar;
 use crate::spnav;
 use crate::spnav::client::Client;
@@ -5,9 +6,11 @@ use iced::{widget, Fill};
 use iced::{Element, Subscription};
 use iced_aw::{TabBar, TabLabel};
 use libspnav::Device;
+use spacenav_settings::Profiles;
 
 pub struct App {
     state: State,
+    profiles: Profiles,
     client: Option<Client>,
     device: Option<Device>,
     tx: f32,
@@ -27,16 +30,19 @@ enum State {
 
 #[derive(Debug, Clone)]
 pub enum Message {
+    LoadSettings,
+    StoreSettings,
     Connect,
     Disconnect,
     ClientEvent(spnav::client::Event),
-    TabSelected(usize),
+    TabSelected(String),
 }
 
 impl Default for App {
     fn default() -> Self {
         Self {
             state: State::Disconnected,
+            profiles: Default::default(),
             client: None,
             device: None,
             tx: 0_f32,
@@ -53,6 +59,15 @@ impl App {
 
     pub fn update(&mut self, message: Message) {
         match message {
+            Message::LoadSettings => {
+                let profiles = load_profiles()
+                    .expect("Failed to load profiles");
+                self.profiles = profiles
+            }
+            Message::StoreSettings => {
+                store_profiles(&self.profiles)
+                    .expect("Failed to store profiles");
+            }
             Message::Connect => {
                 if matches!(self.state, State::Disconnected) {
                     self.state = State::Connecting;
@@ -124,22 +139,27 @@ impl App {
             }
         };
 
+        let tab_bar = self.profiles.profiles.iter()
+            .map(|(id, profile)| (id.to_owned(), TabLabel::Text(Clone::clone(&profile.name))))
+            .fold(TabBar::new(Message::TabSelected), |tab_bar, (key, tab)| tab_bar.push(key, tab));
+
         widget::Column::new()
-            .push(TabBar::new(Message::TabSelected)
-                .push(0, TabLabel::Text(String::from("Tab 1")))
-                .push(2, TabLabel::Text(String::from("Tab 2")))
-                .push(3, TabLabel::Text(String::from("Tab 3")))
-            )
             .push(
                 widget::Row::new()
                     .spacing(10)
                     .push(widget::text("State:"))
                     .push(widget::text(format!("{:?}", self.state)))
             )
-            .push(connect_button)
+            .push(widget::Row::new()
+                .spacing(10)
+                .push(connect_button)
+                .push(widget::button("Load settings").on_press(Message::LoadSettings))
+                .push(widget::button("Store settings").on_press(Message::StoreSettings))
+            )
             .push(
                 widget::text(format!("Device: {:?}", self.device))
             )
+            .push(tab_bar)
             .push(widget::Row::new()
                 .push(widget::Column::new()
                     .push(widget::Row::new()

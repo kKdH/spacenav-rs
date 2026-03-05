@@ -25,7 +25,9 @@ all-features = true
 
 [dependencies]
 libspnav = { workspace = true }
+spacenav-settings = { workspace = true, features = ["toml"] }
 
+directories = { workspace = true }
 futures = { workspace = true }
 iced = { workspace = true, features = ["sipper", "tokio"] }
 iced_aw = { workspace = true }
