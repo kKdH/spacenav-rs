@@ -27,8 +27,9 @@ all-features = true
 libspnav = { workspace = true }
 
 futures = { workspace = true }
-iced = { workspace = true, features = ["sipper"] }
+iced = { workspace = true, features = ["sipper", "tokio"] }
 iced_aw = { workspace = true }
+tokio = { workspace = true }
 
 [dev-dependencies]
 googletest = { workspace = true }

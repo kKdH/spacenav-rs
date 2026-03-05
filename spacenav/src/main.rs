@@ -16,6 +16,12 @@ struct App {
     state: State,
     client: Option<Client>,
     device: Option<Device>,
+    tx: f32,
+    ty: f32,
+    tz: f32,
+    rx: f32,
+    ry: f32,
+    rz: f32,
 }
 
 #[derive(Debug, Clone)]
@@ -38,6 +44,12 @@ impl Default for App {
             state: State::Disconnected,
             client: None,
             device: None,
+            tx: 0_f32,
+            ty: 0_f32,
+            tz: 0_f32,
+            rx: 0_f32,
+            ry: 0_f32,
+            rz: 0_f32,
         }
     }
 }
@@ -74,6 +86,17 @@ impl App {
                         self.device = None;
                         self.state = State::Disconnected;
                     },
+                    spnav::client::Event::Axis(event) => {
+                        match event.index {
+                            0 => self.tx = event.value as f32,
+                            1 => self.ty = event.value as f32,
+                            2 => self.tz = event.value as f32,
+                            3 => self.rx = event.value as f32,
+                            4 => self.ry = event.value as f32,
+                            5 => self.rz = event.value as f32,
+                            _ => {}
+                        }
+                    }
                     spnav::client::Event::Error => {
                         self.state = State::Disconnected;
                     },
@@ -113,6 +136,42 @@ impl App {
             .push(connect_button)
             .push(
                 widget::text(format!("Device: {:?}", self.device))
+            )
+            .push(widget::Row::new()
+                .spacing(10)
+                .padding(10)
+                .push(widget::text("tx:"))
+                .push(widget::progress_bar(-500.0..=500.0, self.tx))
+            )
+            .push(widget::Row::new()
+                .spacing(10)
+                .padding(10)
+                .push(widget::text("ty:"))
+                .push(widget::progress_bar(-500_f32..=500_f32, self.ty))
+            )
+            .push(widget::Row::new()
+                .spacing(10)
+                .padding(10)
+                .push(widget::text("tz:"))
+                .push(widget::progress_bar(-500_f32..=500_f32, self.tz))
+            )
+            .push(widget::Row::new()
+                .spacing(10)
+                .padding(10)
+                .push(widget::text("rx:"))
+                .push(widget::progress_bar(-500_f32..=500_f32, self.rx))
+            )
+            .push(widget::Row::new()
+                .spacing(10)
+                .padding(10)
+                .push(widget::text("ry:"))
+                .push(widget::progress_bar(-500_f32..=500_f32, self.ry))
+            )
+            .push(widget::Row::new()
+                .spacing(10)
+                .padding(10)
+                .push(widget::text("rz:"))
+                .push(widget::progress_bar(-500_f32..=500_f32, self.rz))
             )
             .into()
     }

@@ -1,8 +1,10 @@
+use std::time::Duration;
 use futures::channel::mpsc;
 use futures::channel::mpsc::Sender;
 use iced::task::{sipper, Sipper};
 use iced::Never;
-use libspnav::Device;
+use tokio::time::sleep;
+use libspnav::{AxisEvent, Device, PollError};
 
 #[derive(Debug, Clone)]
 pub enum Message {
@@ -14,6 +16,7 @@ pub enum Message {
 pub enum Event {
     Created(Client),
     Connected(Device),
+    Axis(AxisEvent),
     Disconnected,
     Error
 }
@@ -55,6 +58,21 @@ pub fn create() -> impl Sipper<Never, Event> {
                         match libspnav::open() {
                             Ok(device) => {
                                 output.send(Event::Connected(device)).await;
+
+                                tokio::spawn({
+                                    let mut output = Clone::clone(&output);
+                                    async move {
+                                        loop {
+                                            let event = libspnav::poll();
+                                            match event {
+                                                Ok(libspnav::Event::Axis(axis)) => {
+                                                    output.send(Event::Axis(axis)).await;
+                                                }
+                                                _ => {}
+                                            }
+                                        }
+                                    }
+                                });
                             }
                             Err(_) => {
                                 todo!()

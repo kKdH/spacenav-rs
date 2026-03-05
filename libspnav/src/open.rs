@@ -33,6 +33,10 @@ pub fn open() -> Result<Device, OpenError> {
         return Err(OpenError::Connect)
     }
 
+    unsafe {
+        libspnav::spnav_evmask(libspnav::SPNAV_EVMASK_ALL);
+    }
+
     Ok(
         Device {
             name: get_device_name()?,

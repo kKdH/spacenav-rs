@@ -38,6 +38,7 @@ fn bindgen() {
     let bindings = bindgen::Builder::default()
         .header("libspnav/src/spnav.h")
         .clang_arg("-Ilibspnav/")
+        .derive_default(true)
         .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
         .generate()
         .expect("Unable to generate bindings")
