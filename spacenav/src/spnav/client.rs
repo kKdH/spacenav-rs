@@ -85,7 +85,7 @@ pub fn create() -> impl Sipper<Never, Event> {
                                 output.send(Event::Disconnected).await;
                             }
                             Err(_) => {
-                                todo!()
+                                todo!("Handle error on libspnav::close")
                             }
                         }
                     }
