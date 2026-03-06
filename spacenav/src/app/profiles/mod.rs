@@ -19,7 +19,7 @@ pub fn load_profiles() -> Result<Profiles, ()> {
 pub fn store_profiles(profiles: &Profiles) -> Result<(), ()> {
 
     spacenav_settings::write_profiles_toml(profiles, profile_toml_path()?)
-        .map_err(|cause| println!("{cause}"));
+        .map_err(|_| ())?;
 
     Ok(())
 }
