@@ -26,6 +26,7 @@ futures = { version = "0.3.*" }
 googletest = { version = "0.14.*" }
 iced = { version = "0.14.*", features = ["debug"] }
 iced_aw = { version = "0.13.*" }
+image = { version = "0.25.*" }
 serde = { version = "1.*" }
 tokio = { version = "*" }
 toml = { version = "1.0.4+spec-1.1.0" }
