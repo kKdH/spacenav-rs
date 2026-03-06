@@ -26,9 +26,11 @@ futures = { version = "0.3.*" }
 googletest = { version = "0.14.*" }
 iced = { version = "0.14.*", features = ["debug"] }
 iced_aw = { version = "0.13.*" }
+iced_font_awesome = { version = "0.4.*" }
 iced_toaster = { version = "0.2.0" }
 image = { version = "0.25.*" }
 serde = { version = "1.*" }
+shadow-rs = { version = "1.7.*", default-features = false }
 tokio = { version = "*" }
 toml = { version = "1.0.4+spec-1.1.0" }
 indoc = { version = "2.0.*" }

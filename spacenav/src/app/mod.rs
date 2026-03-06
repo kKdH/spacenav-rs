@@ -1,5 +1,5 @@
 mod app;
 mod widgets;
-mod profiles;
+mod views;
 
-pub use app::App;
+pub use app::SpaceNavCockpit;

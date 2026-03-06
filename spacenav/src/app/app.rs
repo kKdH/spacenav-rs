@@ -1,31 +1,34 @@
-use crate::app::profiles::{load_profiles, store_profiles};
+use crate::app::views;
+use crate::app::views::{configuration_view, header_view};
 use crate::app::widgets::axis_bar;
 use crate::spnav;
 use crate::spnav::client::Client;
+use crate::util::{load_profiles, store_profiles};
+use iced::widget::container;
 use iced::{widget, Fill};
 use iced::{Element, Subscription};
-use iced::widget::container;
-use iced_aw::{TabBar, TabLabel};
 use iced_toaster::{Toast, ToastId, ToastLevel, Toaster};
 use libspnav::Device;
 use spacenav_settings::{Profile, Profiles};
+use views::footer_view;
 
-pub struct App {
-    state: State,
-    profiles: Profiles,
-    client: Option<Client>,
-    device: Option<Device>,
-    tx: f32,
-    ty: f32,
-    tz: f32,
-    rx: f32,
-    ry: f32,
-    rz: f32,
-    toaster: Toaster<Message>,
+pub struct SpaceNavCockpit {
+    pub state: State,
+    pub profiles: Profiles,
+    pub selected_profile: Option<(String, Profile)>,
+    pub client: Option<Client>,
+    pub device: Option<Device>,
+    pub tx: f32,
+    pub ty: f32,
+    pub tz: f32,
+    pub rx: f32,
+    pub ry: f32,
+    pub rz: f32,
+    pub toaster: Toaster<Message>,
 }
 
 #[derive(Debug, Clone)]
-enum State {
+pub enum State {
     Disconnected,
     Connecting,
     Connected,
@@ -45,11 +48,12 @@ pub enum Message {
     Tick,
 }
 
-impl Default for App {
+impl Default for SpaceNavCockpit {
     fn default() -> Self {
         Self {
             state: State::Disconnected,
-            profiles: Default::default(),
+            profiles: Profiles::default(),
+            selected_profile: None,
             client: None,
             device: None,
             tx: 0_f32,
@@ -63,7 +67,7 @@ impl Default for App {
     }
 }
 
-impl App {
+impl SpaceNavCockpit {
 
     pub fn update(&mut self, message: Message) {
         match message {
@@ -147,8 +151,10 @@ impl App {
                     },
                 }
             }
-            Message::TabSelected(index) => {
-                println!("Tab selected: {}", index);
+            Message::TabSelected(id) => {
+                self.selected_profile = self.profiles.profiles.get(&id)
+                    .cloned()
+                    .map(|profile| (id, profile));
             }
             Message::PushToast(toast) => {
                 self.toaster.push(toast);
@@ -176,42 +182,10 @@ impl App {
 
     pub fn view(&self) -> Element<'_, Message> {
 
-        let connect_button = match self.state {
-            State::Disconnected => {
-                widget::button("Connect")
-                    .on_press(Message::Connect)
-            }
-            State::Connecting => {
-                widget::button("Connecting...")
-            }
-            State::Connected => {
-                widget::button("Disconnect")
-                    .on_press(Message::Disconnect)
-            }
-        };
-
-        let tab_bar = self.profiles.profiles.iter()
-            .map(|(id, profile)| (id.to_owned(), TabLabel::Text(Clone::clone(&profile.name))))
-            .fold(TabBar::new(Message::TabSelected), |tab_bar, (key, tab)| tab_bar.push(key, tab));
-
         let content = container(
             widget::Column::new()
-                .push(
-                    widget::Row::new()
-                        .spacing(10)
-                        .push(widget::text("State:"))
-                        .push(widget::text(format!("{:?}", self.state)))
-                )
-                .push(widget::Row::new()
-                    .spacing(10)
-                    .push(connect_button)
-                    .push(widget::button("Load settings").on_press(Message::LoadSettings))
-                    .push(widget::button("Store settings").on_press(Message::StoreSettings))
-                )
-                .push(
-                    widget::text(format!("Device: {:?}", self.device))
-                )
-                .push(tab_bar)
+                .push(header_view(self))
+                .push(configuration_view(self))
                 .push(widget::Row::new()
                     .push(widget::Column::new()
                         .push(widget::Row::new()
@@ -242,7 +216,9 @@ impl App {
                             .push(widget::canvas(axis_bar(-500_f32..=500_f32, self.rz)).width(Fill).height(30)).padding(10))
                     )
                 )
-            ).height(Fill);
+                .push(widget::Space::new().height(Fill))
+                .push(footer_view(self))
+            );
 
             self.toaster
                 .view(content, Message::DismissToast, Message::SetHoveredToast)

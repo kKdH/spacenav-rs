@@ -55,8 +55,8 @@ mod tests {
         let profiles = deserialize_toml(example).unwrap();
 
         assert_that!(profiles.profiles, len(eq(2)));
-        assert_that!(profiles.profiles["p1"].name, eq("Profile 1"));
-        assert_that!(profiles.profiles["p2"].name, eq("Profile 2"));
+        assert_that!(profiles.profiles["p1"].title, eq("Profile 1"));
+        assert_that!(profiles.profiles["p2"].title, eq("Profile 2"));
 
         let content = serialize_toml(&profiles).unwrap();
 

@@ -31,9 +31,14 @@ directories = { workspace = true }
 futures = { workspace = true }
 iced = { workspace = true, features = ["image", "sipper", "tokio"] }
 iced_aw = { workspace = true }
+iced_font_awesome = { workspace = true }
 iced_toaster = { workspace = true }
 image = { workspace = true }
+shadow-rs = { workspace = true }
 tokio = { workspace = true }
 
 [dev-dependencies]
 googletest = { workspace = true }
+
+[build-dependencies]
+shadow-rs = { workspace = true, features = ["build"] }

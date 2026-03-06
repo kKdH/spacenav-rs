@@ -1,16 +1,20 @@
-use crate::app::App;
+use crate::app::SpaceNavCockpit;
 use iced::window;
 use iced::window::settings::PlatformSpecific;
 use image::ImageFormat;
+use shadow_rs::shadow;
 
-mod spnav;
 mod app;
+mod spnav;
+mod util;
+
+shadow!(build);
 
 fn main() -> Result<(), iced::Error> {
     let app_icon = include_bytes!("../assets/app-icon.webp");
-    iced::application(App::default, App::update, App::view)
-        .subscription(App::subscription)
-        .title("SpaceNav")
+    iced::application(SpaceNavCockpit::default, SpaceNavCockpit::update, SpaceNavCockpit::view)
+        .subscription(SpaceNavCockpit::subscription)
+        .title("SpaceNav Cockpit")
         .window(window::Settings {
             platform_specific: PlatformSpecific {
                 application_id: String::from("spacenav"),

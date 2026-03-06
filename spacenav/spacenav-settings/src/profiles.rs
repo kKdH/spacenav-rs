@@ -16,14 +16,14 @@ impl Profiles {
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Profile {
-    pub name: String,
+    pub title: String,
 }
 
 impl Profile {
 
     pub fn new(name: String) -> Self {
         Self {
-            name,
+            title: name,
         }
     }
 }
