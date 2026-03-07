@@ -3,7 +3,8 @@ mod settings;
 
 use std::fmt::Formatter;
 use std::path::PathBuf;
-pub use profiles::{Profile, Profiles};
+
+pub use profiles::{NavigationFunctionName, NavigationFunctionSettings, Profile, Profiles};
 pub use settings::Settings;
 
 #[cfg(feature = "toml")]

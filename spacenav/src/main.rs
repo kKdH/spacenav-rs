@@ -3,15 +3,16 @@ use iced::window;
 use iced::window::settings::PlatformSpecific;
 use image::ImageFormat;
 use shadow_rs::shadow;
+use crate::assets::APP_ICON;
 
 mod app;
 mod spnav;
 mod util;
+mod assets;
 
 shadow!(build);
 
 fn main() -> Result<(), iced::Error> {
-    let app_icon = include_bytes!("../assets/app-icon.webp");
     iced::application(SpaceNavCockpit::default, SpaceNavCockpit::update, SpaceNavCockpit::view)
         .subscription(SpaceNavCockpit::subscription)
         .title("SpaceNav Cockpit")
@@ -20,7 +21,7 @@ fn main() -> Result<(), iced::Error> {
                 application_id: String::from("spacenav"),
                 ..Default::default()
             },
-            icon: Some(window::icon::from_file_data(app_icon, Some(ImageFormat::WebP))
+            icon: Some(window::icon::from_file_data(APP_ICON, Some(ImageFormat::WebP))
                 .expect("Failed to load embedded app icon")
             ),
             ..Default::default()

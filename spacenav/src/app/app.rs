@@ -9,13 +9,14 @@ use iced::{widget, Fill};
 use iced::{Element, Subscription};
 use iced_toaster::{Toast, ToastId, ToastLevel, Toaster};
 use libspnav::Device;
-use spacenav_settings::{Profile, Profiles};
+use spacenav_settings::{NavigationFunctionName, Profile, Profiles};
 use views::footer_view;
+use crate::assets::ImageHandles;
 
 pub struct SpaceNavCockpit {
     pub state: State,
     pub profiles: Profiles,
-    pub selected_profile: Option<(String, Profile)>,
+    pub selected_profile: Option<String>,
     pub client: Option<Client>,
     pub device: Option<Device>,
     pub tx: f32,
@@ -25,6 +26,7 @@ pub struct SpaceNavCockpit {
     pub ry: f32,
     pub rz: f32,
     pub toaster: Toaster<Message>,
+    pub image_handles: ImageHandles,
 }
 
 #[derive(Debug, Clone)]
@@ -45,6 +47,7 @@ pub enum Message {
     PushToast(Toast<Message>),
     DismissToast(ToastId),
     SetHoveredToast(ToastId, bool),
+    AxisSpeedChanged { profile: String, axis: NavigationFunctionName, speed: f32 },
     Tick,
 }
 
@@ -63,6 +66,7 @@ impl Default for SpaceNavCockpit {
             ry: 0_f32,
             rz: 0_f32,
             toaster: iced_toaster::toaster(),
+            image_handles: ImageHandles::new(),
         }
     }
 }
@@ -151,10 +155,8 @@ impl SpaceNavCockpit {
                     },
                 }
             }
-            Message::TabSelected(id) => {
-                self.selected_profile = self.profiles.profiles.get(&id)
-                    .cloned()
-                    .map(|profile| (id, profile));
+            Message::TabSelected(profile_id) => {
+                self.selected_profile = Some(profile_id);
             }
             Message::PushToast(toast) => {
                 self.toaster.push(toast);
@@ -164,6 +166,15 @@ impl SpaceNavCockpit {
             }
             Message::SetHoveredToast(id, hovered) => {
                 self.toaster.set_hovered(id, hovered);
+            }
+            Message::AxisSpeedChanged { profile: profile_id, axis, speed} => {
+                if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
+                    if let Some(axis) = profile.navigation.get_mut(&axis) {
+                        let speed = speed.max(0_f32).min(2_f32);
+                        let speed = (speed * 100_f32).round() / 100_f32;
+                        axis.speed = speed;
+                    }
+                }
             }
             Message::Tick => {
                 self.toaster.dismiss_expired();
