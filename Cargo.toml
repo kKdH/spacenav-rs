@@ -20,6 +20,7 @@ members = [
 libspnav = { path = "libspnav" }
 spacenav = { path = "spacenav" }
 spacenav-settings = { path = "spacenav/spacenav-settings" }
+spacenav-client = { path = "spacenav/spacenav-client" }
 
 directories = { version = "6.0.*"}
 futures = { version = "0.3.*" }
@@ -32,7 +33,10 @@ image = { version = "0.25.*" }
 serde = { version = "1.*" }
 shadow-rs = { version = "1.7.*", default-features = false }
 tokio = { version = "*" }
+tokio-stream = { version = "0.1.*" }
 toml = { version = "1.0.4+spec-1.1.0" }
+tracing = { version = "0.1.*" }
+tracing-subscriber = { version = "0.3.*" }
 indoc = { version = "2.0.*" }
 
 [profile.release]

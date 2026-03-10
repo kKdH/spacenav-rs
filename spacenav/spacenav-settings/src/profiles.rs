@@ -45,6 +45,6 @@ pub enum NavigationFunctionName {
 pub struct NavigationFunctionSettings {
     pub axis: usize,
     pub speed: f32,
-    pub deadzone: f32,
+    pub threshold: f32,
     pub invert: bool,
 }

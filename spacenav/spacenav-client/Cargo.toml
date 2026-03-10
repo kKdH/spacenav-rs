@@ -1,6 +1,6 @@
 [package]
-name = "libspnav"
-readme = "../README.md"
+name = "spacenav-client"
+readme = "../../README.md"
 publish = false
 version.workspace = true
 authors.workspace = true
@@ -14,21 +14,16 @@ license.workspace = true
 include = [
     "**/*.rs",
     "Cargo.toml",
-    "../README.md",
-    "../CHANGELOG.md",
-    "../LICENSE",
-    "../rust-toolchain.toml",
+    "../../README.md",
+    "../../CHANGELOG.md",
+    "../../LICENSE",
+    "../../rust-toolchain.toml",
 ]
 
 [package.metadata.docs.rs]
 all-features = true
 
 [dependencies]
-tokio = { workspace = true, features = ["sync"] }
-
-[build-dependencies]
-bindgen = { version = "0.72.*" }
-cc = { version = "1", features = ["parallel"] }
-
-[dev-dependencies]
-googletest = { workspace = true }
+libspnav = { workspace = true }
+tokio = { workspace = true, features = ["rt", "sync"] }
+tracing = { workspace = true }

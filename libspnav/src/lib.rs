@@ -1,12 +1,10 @@
-mod device;
-mod open;
-mod close;
-mod event;
+mod ffi;
 
-pub use close::{close, CloseError};
-pub use device::Device;
-pub use event::{poll, AxisEvent, ButtonEvent, ConfigurationEvent, DeviceEvent, Event, MotionEvent, PollError};
-pub use open::{open, OpenError};
+pub use ffi::axes_speed::{set_individual_axes_speed, set_global_axes_speed, SetIndividualAxesSpeedError, SetGlobalAxesSpeedError};
+pub use ffi::close::{close, CloseError};
+pub use ffi::device::{get_device, Device, DeviceType, GetDeviceError};
+pub use ffi::event::{poll, AxisEvent, ButtonEvent, ConfigurationEvent, DeviceEvent, Event, MotionEvent, PollError};
+pub use ffi::open::{open, OpenError};
 
 #[allow(dead_code)]
 #[allow(non_camel_case_types)]

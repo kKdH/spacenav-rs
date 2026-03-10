@@ -41,7 +41,7 @@ pub fn configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
                                     .push(text(format!("{:?}", navigation_name)))
                                     .push(text(format!("Speed: {:.2}", navigation_settings.speed)))
                                     .push(slider(0_f32..=2_f32, navigation_settings.speed, move |value| Message::AxisSpeedChanged { profile: Clone::clone(&profile_id), axis: Clone::clone(&navigation_name), speed: value }).step(0.01))
-                                    .push(text(format!("Deadzone: {}", navigation_settings.deadzone)))
+                                    .push(text(format!("Threshold: {}", navigation_settings.threshold)))
                                     .spacing(10)
                                     .align_y(Vertical::Center)
                                 )

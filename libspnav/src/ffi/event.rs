@@ -1,4 +1,5 @@
 use std::ffi::{c_int, c_uint};
+use std::fmt::Formatter;
 use crate::libspnav;
 
 #[derive(Debug, Clone)]
@@ -42,18 +43,29 @@ pub struct AxisEvent {
 #[derive(Debug, Clone)]
 pub struct PollError;
 
-pub fn poll() -> Result<Event, PollError> {
+impl std::error::Error for PollError {}
+
+impl std::fmt::Display for PollError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Failed to poll event")
+    }
+}
+
+pub fn poll() -> Result<Option<Event>, PollError> {
     let mut event = libspnav::spnav_event::default();
     let event_type = unsafe {
-        libspnav::spnav_wait_event(&mut event) as c_uint
+        libspnav::spnav_poll_event(&mut event) as c_uint
     };
     let event = match event_type {
-        libspnav::SPNAV_EVENT_MOTION => Event::Motion(motion_event_from_c(&event)),
-        libspnav::SPNAV_EVENT_BUTTON | libspnav::SPNAV_EVENT_RAWBUTTON => Event::Button(button_event_from_c(&event)),
-        libspnav::SPNAV_EVENT_DEV => Event::Device(device_event_from_c(&event)),
-        libspnav::SPNAV_EVENT_CFG => Event::Configuration(configuration_event_from_c(&event)),
-        libspnav::SPNAV_EVENT_RAWAXIS => Event::Axis(axis_event_from_c(&event)),
-        _ => return Err(PollError),
+        libspnav::SPNAV_EVENT_MOTION => Some(Event::Motion(motion_event_from_c(&event))),
+        libspnav::SPNAV_EVENT_BUTTON | libspnav::SPNAV_EVENT_RAWBUTTON => Some(Event::Button(button_event_from_c(&event))),
+        libspnav::SPNAV_EVENT_DEV => Some(Event::Device(device_event_from_c(&event))),
+        libspnav::SPNAV_EVENT_CFG => Some(Event::Configuration(configuration_event_from_c(&event))),
+        libspnav::SPNAV_EVENT_RAWAXIS => Some(Event::Axis(axis_event_from_c(&event))),
+        0 => return Ok(None),
+        _ => {
+            return Err(PollError)
+        },
     };
     Ok(event)
 }

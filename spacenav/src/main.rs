@@ -1,19 +1,32 @@
 use crate::app::SpaceNavCockpit;
+use crate::assets::APP_ICON;
 use iced::window;
 use iced::window::settings::PlatformSpecific;
 use image::ImageFormat;
 use shadow_rs::shadow;
-use crate::assets::APP_ICON;
+use tracing::info;
+use tracing_subscriber::EnvFilter;
 
 mod app;
-mod spnav;
 mod util;
 mod assets;
 
 shadow!(build);
 
 fn main() -> Result<(), iced::Error> {
-    iced::application(SpaceNavCockpit::default, SpaceNavCockpit::update, SpaceNavCockpit::view)
+    tracing_subscriber::fmt()
+        .with_target(true)
+        .with_writer(std::io::stdout)
+        .with_env_filter(
+            EnvFilter::from_default_env()
+                .add_directive("iced=warn".parse().unwrap())
+                .add_directive("spacenav=debug".parse().unwrap())
+        )
+        .init();
+
+    info!("Starting SpaceNav Cockpit");
+
+    iced::application(SpaceNavCockpit::create, SpaceNavCockpit::update, SpaceNavCockpit::view)
         .subscription(SpaceNavCockpit::subscription)
         .title("SpaceNav Cockpit")
         .window(window::Settings {

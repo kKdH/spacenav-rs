@@ -26,6 +26,7 @@ all-features = true
 [dependencies]
 libspnav = { workspace = true }
 spacenav-settings = { workspace = true, features = ["toml"] }
+spacenav-client = { workspace = true }
 
 directories = { workspace = true }
 futures = { workspace = true }
@@ -36,6 +37,9 @@ iced_toaster = { workspace = true }
 image = { workspace = true }
 shadow-rs = { workspace = true }
 tokio = { workspace = true }
+tokio-stream = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true, features = ["env-filter"] }
 
 [dev-dependencies]
 googletest = { workspace = true }
