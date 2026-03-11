@@ -1,7 +1,7 @@
 use tokio::sync::{mpsc, oneshot};
 
-pub use libspnav::{OpenError, CloseError};
-use libspnav::{GetDeviceError, SetIndividualAxesSpeedError, SetGlobalAxesSpeedError};
+pub use libspnav::{CloseError, OpenError};
+use libspnav::{GetDeviceError, SetAxesInvertedError, SetAxesSpeedError, SetAxesThresholdError};
 
 #[derive(Debug)]
 pub enum Command {
@@ -19,9 +19,17 @@ pub enum Command {
     GetDevice {
         reply: oneshot::Sender<Result<libspnav::Device, GetDeviceError>>,
     },
-    SetIndividualAxesSpeed {
+    SetAxesSpeed {
         speed: [f32; 6],
-        reply: oneshot::Sender<Result<(), SetIndividualAxesSpeedError>>,
+        reply: oneshot::Sender<Result<(), SetAxesSpeedError>>,
+    },
+    SetAxesThreshold {
+        threshold: [i32; 6],
+        reply: oneshot::Sender<Result<(), SetAxesThresholdError>>,
+    },
+    SetAxesInverted {
+        inverted: [bool; 6],
+        reply: oneshot::Sender<Result<(), SetAxesInvertedError>>,
     },
 }
 
@@ -53,9 +61,23 @@ impl Command {
         }
     }
 
-    pub fn new_command_set_individual_axes_speed(speed: [f32; 6], reply: oneshot::Sender<Result<(), SetIndividualAxesSpeedError>>) -> Self {
-        Self::SetIndividualAxesSpeed {
+    pub fn new_command_set_axes_speed(speed: [f32; 6], reply: oneshot::Sender<Result<(), SetAxesSpeedError>>) -> Self {
+        Self::SetAxesSpeed {
             speed,
+            reply,
+        }
+    }
+
+    pub fn new_command_set_axes_threshold(threshold: [i32; 6], reply: oneshot::Sender<Result<(), SetAxesThresholdError>>) -> Self {
+        Self::SetAxesThreshold {
+            threshold,
+            reply,
+        }
+    }
+
+    pub fn new_command_set_axes_inverted(inverted: [bool; 6], reply: oneshot::Sender<Result<(), SetAxesInvertedError>>) -> Self {
+        Self::SetAxesInverted {
+            inverted,
             reply,
         }
     }

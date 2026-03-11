@@ -1,6 +1,5 @@
 use crate::app::views;
 use crate::app::views::{configuration_view, header_view};
-use crate::app::widgets::axis_bar;
 use crate::assets::ImageHandles;
 use crate::util::{load_profiles, store_profiles};
 use iced::widget::container;
@@ -19,12 +18,7 @@ pub struct SpaceNavCockpit {
     pub selected_profile: Option<String>,
     pub client: Option<SpaceNavClient>,
     pub device: Option<libspnav::Device>,
-    pub tx: f32,
-    pub ty: f32,
-    pub tz: f32,
-    pub rx: f32,
-    pub ry: f32,
-    pub rz: f32,
+    pub axes_values: [f32; 6],
     pub toaster: Toaster<Message>,
     pub image_handles: ImageHandles,
 }
@@ -47,12 +41,16 @@ pub enum Message {
     ClientSubscriptionEvent(Result<(), ()>),
     ClientEvent(libspnav::Event),
     ClientGetDeviceEvent(Result<libspnav::Device, ()>),
-    ClientSetIndividualAxesSpeedEvent(Result<(), ()>),
+    ClientSetAxesSpeedEvent(Result<(), ()>),
     TabSelected(String),
     PushToast(Toast<Message>),
     DismissToast(ToastId),
     SetHoveredToast(ToastId, bool),
     AxisSpeedChanged { profile: String, axis: NavigationFunctionName, speed: f32 },
+    UpdateAxisSpeed { profile: String, axis: NavigationFunctionName },
+    AxisThresholdChanged { profile: String, axis: NavigationFunctionName, threshold: i32 },
+    AxisInvertedChanged { profile: String, axis: NavigationFunctionName, inverted: bool },
+    UpdateAxisThreshold { profile: String, axis: NavigationFunctionName },
     Tick,
 }
 
@@ -65,12 +63,7 @@ impl SpaceNavCockpit {
             profiles: Profiles::default(),
             selected_profile: None,
             device: None,
-            tx: 0_f32,
-            ty: 0_f32,
-            tz: 0_f32,
-            rx: 0_f32,
-            ry: 0_f32,
-            rz: 0_f32,
+            axes_values: [0_f32; 6],
             toaster: iced_toaster::toaster(),
             image_handles: ImageHandles::new(),
         }
@@ -217,21 +210,19 @@ impl SpaceNavCockpit {
                     }
                 }
             }
-            Message::ClientSetIndividualAxesSpeedEvent(_) => {
+            Message::ClientSetAxesSpeedEvent(_) => {
                 Task::none()
             }
             Message::ClientEvent(event) => {
                 match event {
-                    libspnav::Event::Axis(event) => {
-                        match event.index {
-                            0 => self.tx = event.value as f32,
-                            1 => self.ty = event.value as f32,
-                            2 => self.tz = event.value as f32,
-                            3 => self.rx = event.value as f32,
-                            4 => self.ry = event.value as f32,
-                            5 => self.rz = event.value as f32,
-                            _ => {}
-                        }
+                    libspnav::Event::Motion(event) => {
+                        // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
+                        self.axes_values[0] = event.x as f32;
+                        self.axes_values[1] = event.y as f32;
+                        self.axes_values[2] = event.z as f32;
+                        self.axes_values[3] = event.rx as f32;
+                        self.axes_values[4] = event.ry as f32;
+                        self.axes_values[5] = event.rz as f32;
                     }
                     _ => {}
                 }
@@ -239,7 +230,11 @@ impl SpaceNavCockpit {
             }
             Message::TabSelected(profile_id) => {
                 self.selected_profile = Some(profile_id);
-                self.update_individual_axes_speed()
+                Task::batch(vec![
+                    self.update_axes_speed(),
+                    self.update_axes_threshold(),
+                    self.update_axes_inverted(),
+                ])
             }
             Message::PushToast(toast) => {
                 self.toaster.push(toast);
@@ -253,18 +248,38 @@ impl SpaceNavCockpit {
                 self.toaster.set_hovered(id, hovered);
                 Task::none()
             }
-            Message::AxisSpeedChanged { profile: profile_id, axis, speed} => {
+            Message::AxisSpeedChanged { profile: profile_id, axis, speed } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(axis) = profile.navigation.get_mut(&axis) {
                         let speed = speed.max(0_f32).min(2_f32);
                         let speed = (speed * 100_f32).round() / 100_f32;
                         axis.speed = speed;
                     }
-                    self.update_individual_axes_speed()
                 }
-                else {
-                    Task::none()
+                Task::none()
+            }
+            Message::UpdateAxisSpeed { profile: _profile_id, axis: _axis } => {
+                self.update_axes_speed()
+            }
+            Message::AxisThresholdChanged { profile: profile_id, axis, threshold } => {
+                if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
+                    if let Some(axis) = profile.navigation.get_mut(&axis) {
+                        let threshold = threshold.max(0_i32).min(255_i32);
+                        axis.threshold = threshold;
+                    }
                 }
+                Task::none()
+            }
+            Message::UpdateAxisThreshold { profile: _profile_id, axis: _axis } => {
+                self.update_axes_threshold()
+            }
+            Message::AxisInvertedChanged { profile: profile_id, axis, inverted: invert } => {
+                if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
+                    if let Some(axis) = profile.navigation.get_mut(&axis) {
+                        axis.invert = invert;
+                    }
+                }
+                self.update_axes_inverted()
             }
             Message::Tick => {
                 self.toaster.dismiss_expired();
@@ -273,7 +288,7 @@ impl SpaceNavCockpit {
         }
     }
 
-    fn update_individual_axes_speed(&mut self) -> Task<Message> {
+    fn update_axes_speed(&mut self) -> Task<Message> {
 
         let profile = &self.selected_profile.as_ref()
             .and_then(|id| self.profiles.profiles.get(id))
@@ -287,11 +302,54 @@ impl SpaceNavCockpit {
             .try_into()
             .expect("There should be exactly six axes.");
 
-        let set_individual_axes_speed = self.client.as_ref()
+        let set_axes_speed = self.client.as_ref()
             .expect("Client should be created before")
-            .set_individual_axes_speed(speed);
+            .set_axes_speed(speed);
 
-        Task::perform(set_individual_axes_speed, Message::ClientSetIndividualAxesSpeedEvent)
+        Task::perform(set_axes_speed, Message::ClientSetAxesSpeedEvent)
+    }
+
+    fn update_axes_threshold(&mut self) -> Task<Message> {
+
+        let profile = &self.selected_profile.as_ref()
+            .and_then(|id| self.profiles.profiles.get(id))
+            .expect("Selected profile must exist");
+
+        // TODO: This will fail if there are more or less than 6 axes.
+        // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
+        let threshold: [i32; 6] = profile.navigation.values()
+            .map(|axis| axis.threshold)
+            .collect::<Vec<_>>()
+            .try_into()
+            .expect("There should be exactly six axes.");
+
+        let set_axes_threshold = self.client.as_ref()
+            .expect("Client should be created before")
+            .set_axes_threshold(threshold);
+
+        Task::perform(set_axes_threshold, Message::ClientSetAxesSpeedEvent)
+    }
+
+
+    fn update_axes_inverted(&mut self) -> Task<Message> {
+
+        let profile = &self.selected_profile.as_ref()
+            .and_then(|id| self.profiles.profiles.get(id))
+            .expect("Selected profile must exist");
+
+        // TODO: This will fail if there are more or less than 6 axes.
+        // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
+        let inverted: [bool; 6] = profile.navigation.values()
+            .map(|axis| axis.invert)
+            .collect::<Vec<_>>()
+            .try_into()
+            .expect("There should be exactly six axes.");
+
+        let set_axes_inverted = self.client.as_ref()
+            .expect("Client should be created before")
+            .set_axes_inverted(inverted);
+
+        Task::perform(set_axes_inverted, Message::ClientSetAxesSpeedEvent)
     }
 
     pub fn view(&self) -> Element<'_, Message> {
@@ -300,36 +358,6 @@ impl SpaceNavCockpit {
             widget::Column::new()
                 .push(header_view(self))
                 .push(configuration_view(self))
-                .push(widget::Row::new()
-                    .push(widget::Column::new()
-                        .push(widget::Row::new()
-                            .spacing(10)
-                            .push(widget::text("tx"))
-                            .push(widget::canvas(axis_bar(-500_f32..=500_f32, self.tx)).width(Fill).height(30)).padding(10))
-                        .push(widget::Row::new()
-                            .spacing(10)
-                            .push(widget::text("ty"))
-                            .push(widget::canvas(axis_bar(-500_f32..=500_f32, self.ty)).width(Fill).height(30)).padding(10))
-                        .push(widget::Row::new()
-                            .spacing(10)
-                            .push(widget::text("tz"))
-                            .push(widget::canvas(axis_bar(-500_f32..=500_f32, self.tz)).width(Fill).height(30)).padding(10))
-                    )
-                    .push(widget::Column::new()
-                        .push(widget::Row::new()
-                            .spacing(10)
-                            .push(widget::text("rx"))
-                            .push(widget::canvas(axis_bar(-500_f32..=500_f32, self.rx)).width(Fill).height(30)).padding(10))
-                        .push(widget::Row::new()
-                            .spacing(10)
-                            .push(widget::text("ry"))
-                            .push(widget::canvas(axis_bar(-500_f32..=500_f32, self.ry)).width(Fill).height(30)).padding(10))
-                        .push(widget::Row::new()
-                            .spacing(10)
-                            .push(widget::text("rz"))
-                            .push(widget::canvas(axis_bar(-500_f32..=500_f32, self.rz)).width(Fill).height(30)).padding(10))
-                    )
-                )
                 .push(widget::Space::new().height(Fill))
                 .push(footer_view(self))
             );

@@ -1,8 +1,8 @@
 use crate::client::command::Command;
 use crate::client::ffi::spawn_ffi_thread;
+use libspnav::OpenError;
 use tokio::sync::{mpsc, oneshot};
 use tracing::{debug, info};
-use libspnav::OpenError;
 
 pub struct SpaceNavClient {
     command_sender: Option<mpsc::Sender<Command>>,
@@ -97,16 +97,50 @@ impl SpaceNavClient {
         }
     }
 
-    pub fn set_individual_axes_speed(&self, speed: [f32; 6]) -> impl Future<Output=Result<(), ()>> + 'static {
+    pub fn set_axes_speed(&self, speed: [f32; 6]) -> impl Future<Output=Result<(), ()>> + 'static {
 
         let sender = Clone::clone(&self.command_sender)
             .expect("Sender should be valid until shutdown");
         let (reply_sender, reply_receiver) = oneshot::channel();
 
-        debug!("Setting individual axes speed: {speed:?}");
+        debug!("Setting axes speed: {speed:?}");
 
         async move {
-            sender.send(Command::new_command_set_individual_axes_speed(speed, reply_sender)).await
+            sender.send(Command::new_command_set_axes_speed(speed, reply_sender)).await
+                .map_err(|_| ())?;
+            reply_receiver.await
+                .map(|result| result.map_err(|_| ()))
+                .map_err(|_| ())?
+        }
+    }
+
+    pub fn set_axes_threshold(&self, threshold: [i32; 6]) -> impl Future<Output=Result<(), ()>> + 'static {
+
+        let sender = Clone::clone(&self.command_sender)
+            .expect("Sender should be valid until shutdown");
+        let (reply_sender, reply_receiver) = oneshot::channel();
+
+        debug!("Setting axes threshold: {threshold:?}");
+
+        async move {
+            sender.send(Command::new_command_set_axes_threshold(threshold, reply_sender)).await
+                .map_err(|_| ())?;
+            reply_receiver.await
+                .map(|result| result.map_err(|_| ()))
+                .map_err(|_| ())?
+        }
+    }
+
+    pub fn set_axes_inverted(&self, inverted: [bool; 6]) -> impl Future<Output=Result<(), ()>> + 'static {
+
+        let sender = Clone::clone(&self.command_sender)
+            .expect("Sender should be valid until shutdown");
+        let (reply_sender, reply_receiver) = oneshot::channel();
+
+        debug!("Setting axes inverted: {inverted:?}");
+
+        async move {
+            sender.send(Command::new_command_set_axes_inverted(inverted, reply_sender)).await
                 .map_err(|_| ())?;
             reply_receiver.await
                 .map(|result| result.map_err(|_| ()))

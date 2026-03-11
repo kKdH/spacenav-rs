@@ -29,7 +29,7 @@ impl Profile {
     }
 }
 
-#[derive(Clone, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
+#[derive(Clone, Copy, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum NavigationFunctionName {
     LeftRight,
@@ -45,6 +45,6 @@ pub enum NavigationFunctionName {
 pub struct NavigationFunctionSettings {
     pub axis: usize,
     pub speed: f32,
-    pub threshold: f32,
+    pub threshold: i32,
     pub invert: bool,
 }

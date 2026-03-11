@@ -1,6 +1,6 @@
 use crate::app::SpaceNavCockpit;
 use crate::assets::APP_ICON;
-use iced::window;
+use iced::{window, Size};
 use iced::window::settings::PlatformSpecific;
 use image::ImageFormat;
 use shadow_rs::shadow;
@@ -34,6 +34,7 @@ fn main() -> Result<(), iced::Error> {
                 application_id: String::from("spacenav"),
                 ..Default::default()
             },
+            min_size: Some(Size::new(900_f32, 900_f32)),
             icon: Some(window::icon::from_file_data(APP_ICON, Some(ImageFormat::WebP))
                 .expect("Failed to load embedded app icon")
             ),

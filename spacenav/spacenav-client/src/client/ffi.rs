@@ -1,6 +1,6 @@
-use std::mem::forget;
 use crate::client::command::Command;
-use libspnav::{CloseError, Event, GetDeviceError, OpenError, SetIndividualAxesSpeedError};
+use libspnav::{CloseError, Event, GetDeviceError, OpenError, SetAxesInvertedError, SetAxesSpeedError, SetAxesThresholdError};
+use std::mem::forget;
 use std::os::fd::OwnedFd;
 use tokio::io::unix::AsyncFd;
 use tokio::select;
@@ -102,8 +102,12 @@ fn handle_command(state: &mut State, command: Command) {
             handle_command_subscribe(state, subscriber, reply),
         Command::GetDevice { reply } =>
             handle_command_get_device(state, reply),
-        Command::SetIndividualAxesSpeed { speed: speeds, reply } =>
-            handle_command_set_axes_speed(state, speeds, reply),
+        Command::SetAxesSpeed { speed, reply } =>
+            handle_command_set_axes_speed(state, speed, reply),
+        Command::SetAxesThreshold { threshold, reply } =>
+            handle_command_set_axes_threshold(state, threshold, reply),
+        Command::SetAxesInverted { inverted, reply } =>
+            handle_command_set_axes_inverted(state, inverted, reply),
     }
 }
 
@@ -132,7 +136,7 @@ fn handle_command_open(
             info!("Connection to daemon opened successfully.")
         }
         Err(cause) => {
-            info!("Failed to open connection to daemon: {cause}");
+            error!("Failed to open connection to daemon: {cause}");
             reply.send(Err(cause))
                 .expect("Failed to send open failure reply");
         }
@@ -162,7 +166,7 @@ fn handle_command_close(
             info!("Connection to daemon closed successfully.")
         }
         Err(cause) => {
-            info!("Failed to close connection to daemon: {cause}");
+            error!("Failed to close connection to daemon: {cause}");
             reply.send(Err(cause))
                 .expect("Failed to send close failure reply");
         }
@@ -183,7 +187,7 @@ fn handle_command_get_device(
             info!("Fetched device information from daemon successfully.")
         }
         Err(cause) => {
-            info!("Failed to fetch device information from daemon: {cause}");
+            error!("Failed to fetch device information from daemon: {cause}");
             reply.send(Err(cause))
                 .expect("Failed to send GetDevice failure reply");
         }
@@ -193,20 +197,63 @@ fn handle_command_get_device(
 fn handle_command_set_axes_speed(
     _state: &mut State,
     speed: [f32; 6],
-    reply: oneshot::Sender<Result<(), SetIndividualAxesSpeedError>>
+    reply: oneshot::Sender<Result<(), SetAxesSpeedError>>
 ) {
-    debug!("Setting individual axes speed: {speed:?}");
+    debug!("Setting axes speed.");
 
-    match libspnav::set_individual_axes_speed(speed) {
+    match libspnav::set_axes_speed(speed) {
         Ok(device) => {
             reply.send(Ok(device))
-                .expect("Failed to send SetIndividualAxesSpeed success reply");
-            info!("Set individual axes speed successfully.")
+                .expect("Failed to send SetAxesSpeed success reply");
+            info!("Set axes speed successfully: {speed:?}")
         }
         Err(cause) => {
-            info!("Failed to set individual axes speed: {cause}");
+            error!("Failed to set axes speed: {cause}");
             reply.send(Err(cause))
-                .expect("Failed to send SetIndividualAxesSpeed failure reply");
+                .expect("Failed to send SetAxesSpeed failure reply");
+        }
+    }
+}
+
+fn handle_command_set_axes_threshold(
+    _state: &mut State,
+    threshold: [i32; 6],
+    reply: oneshot::Sender<Result<(), SetAxesThresholdError>>
+) {
+    debug!("Setting axes threshold.");
+
+    match libspnav::set_axes_threshold(threshold) {
+        Ok(device) => {
+            reply.send(Ok(device))
+                .expect("Failed to send SetAxesThreshold success reply");
+            info!("Set axes threshold successfully: {threshold:?}")
+        }
+        Err(cause) => {
+            error!("Failed to set axes threshold: {cause}");
+            reply.send(Err(cause))
+                .expect("Failed to send SetAxesThreshold failure reply");
+        }
+    }
+}
+
+
+fn handle_command_set_axes_inverted(
+    _state: &mut State,
+    inverted: [bool; 6],
+    reply: oneshot::Sender<Result<(), SetAxesInvertedError>>
+) {
+    debug!("Setting axes inverted.");
+
+    match libspnav::set_axes_inverted(inverted) {
+        Ok(device) => {
+            reply.send(Ok(device))
+                .expect("Failed to send SetAxesInverted success reply");
+            info!("Set axes inverted successfully: {inverted:?}")
+        }
+        Err(cause) => {
+            error!("Failed to set axes inverted: {cause}");
+            reply.send(Err(cause))
+                .expect("Failed to send SetAxesInverted failure reply");
         }
     }
 }
@@ -218,7 +265,7 @@ fn handle_command_subscribe(state: &mut State, subscriber: mpsc::Sender<Event>, 
     state.subscribers.push(subscriber);
 
     reply.send(Ok(()))
-        .expect("Failed to send SetIndividualAxesSpeed success reply");
+        .expect("Failed to send SetAxesSpeed success reply");
 
     info!("Subscribed to events successfully.")
 }
