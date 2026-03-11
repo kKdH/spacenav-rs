@@ -46,11 +46,12 @@ pub enum Message {
     PushToast(Toast<Message>),
     DismissToast(ToastId),
     SetHoveredToast(ToastId, bool),
-    AxisSpeedChanged { profile: String, axis: NavigationFunctionName, speed: f32 },
-    UpdateAxisSpeed { profile: String, axis: NavigationFunctionName },
-    AxisThresholdChanged { profile: String, axis: NavigationFunctionName, threshold: i32 },
-    AxisInvertedChanged { profile: String, axis: NavigationFunctionName, inverted: bool },
-    UpdateAxisThreshold { profile: String, axis: NavigationFunctionName },
+    AxisSpeedChanged { profile: String, function_name: NavigationFunctionName, speed: f32 },
+    UpdateAxisSpeed { profile: String, function_name: NavigationFunctionName },
+    AxisThresholdChanged { profile: String, function_name: NavigationFunctionName, threshold: i32 },
+    AxisInvertedChanged { profile: String, function_name: NavigationFunctionName, inverted: bool },
+    UpdateAxisThreshold { profile: String, function_name: NavigationFunctionName },
+    AxisMappingChanged { profile: String, function_name: NavigationFunctionName, axis: usize },
     Tick,
 }
 
@@ -167,6 +168,7 @@ impl SpaceNavCockpit {
                 match result {
                     Ok(_) => {
                         self.state = State::Disconnected;
+                        self.device = None;
                         self.toaster.push(iced_toaster::toast("Disconnected from the SpaceNav daemon.")
                             .title("Success")
                             .duration(3)
@@ -248,7 +250,7 @@ impl SpaceNavCockpit {
                 self.toaster.set_hovered(id, hovered);
                 Task::none()
             }
-            Message::AxisSpeedChanged { profile: profile_id, axis, speed } => {
+            Message::AxisSpeedChanged { profile: profile_id, function_name: axis, speed } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(axis) = profile.navigation.get_mut(&axis) {
                         let speed = speed.max(0_f32).min(2_f32);
@@ -258,10 +260,10 @@ impl SpaceNavCockpit {
                 }
                 Task::none()
             }
-            Message::UpdateAxisSpeed { profile: _profile_id, axis: _axis } => {
+            Message::UpdateAxisSpeed { profile: _profile_id, function_name: _axis } => {
                 self.update_axes_speed()
             }
-            Message::AxisThresholdChanged { profile: profile_id, axis, threshold } => {
+            Message::AxisThresholdChanged { profile: profile_id, function_name: axis, threshold } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(axis) = profile.navigation.get_mut(&axis) {
                         let threshold = threshold.max(0_i32).min(255_i32);
@@ -270,16 +272,19 @@ impl SpaceNavCockpit {
                 }
                 Task::none()
             }
-            Message::UpdateAxisThreshold { profile: _profile_id, axis: _axis } => {
+            Message::UpdateAxisThreshold { profile: _profile_id, function_name: _axis } => {
                 self.update_axes_threshold()
             }
-            Message::AxisInvertedChanged { profile: profile_id, axis, inverted: invert } => {
+            Message::AxisInvertedChanged { profile: profile_id, function_name: axis, inverted: invert } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(axis) = profile.navigation.get_mut(&axis) {
                         axis.invert = invert;
                     }
                 }
                 self.update_axes_inverted()
+            }
+            Message::AxisMappingChanged { profile, function_name, axis } => {
+                Task::none()
             }
             Message::Tick => {
                 self.toaster.dismiss_expired();
@@ -289,6 +294,10 @@ impl SpaceNavCockpit {
     }
 
     fn update_axes_speed(&mut self) -> Task<Message> {
+
+        if !matches!(self.state, State::Connected) {
+            return Task::none();
+        }
 
         let profile = &self.selected_profile.as_ref()
             .and_then(|id| self.profiles.profiles.get(id))
@@ -311,6 +320,10 @@ impl SpaceNavCockpit {
 
     fn update_axes_threshold(&mut self) -> Task<Message> {
 
+        if !matches!(self.state, State::Connected) {
+            return Task::none();
+        }
+
         let profile = &self.selected_profile.as_ref()
             .and_then(|id| self.profiles.profiles.get(id))
             .expect("Selected profile must exist");
@@ -332,6 +345,10 @@ impl SpaceNavCockpit {
 
 
     fn update_axes_inverted(&mut self) -> Task<Message> {
+
+        if !matches!(self.state, State::Connected) {
+            return Task::none();
+        }
 
         let profile = &self.selected_profile.as_ref()
             .and_then(|id| self.profiles.profiles.get(id))

@@ -71,11 +71,11 @@ pub fn header_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
                     .on_press(Message::StoreSettings)
                 )
                 .push(widget::Space::new().width(Fill))
-                .push(widget::text("State:"))
-                .push(widget::text(format!("{:?}", app.state)))
-        )
-        .push(
-            widget::text(format!("Device: {:?}", app.device))
+                .push(widget::Column::new()
+                    .spacing(5)
+                    .push(widget::text(format!("State: {:?}", app.state)))
+                    .push(widget::text(format!("Device: {:?}", app.device.as_ref().map(|d| Clone::clone(&d.ty)))))
+                )
         );
 
     widget::container(content).into()
