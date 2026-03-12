@@ -1,5 +1,5 @@
 use crate::client::command::Command;
-use libspnav::{CloseError, Event, GetDeviceError, OpenError, SetAxesInvertedError, SetAxesSpeedError, SetAxesThresholdError};
+use libspnav::{CloseError, Event, GetDeviceError, OpenError, SetAxesInvertedError, SetAxesMappingError, SetAxesSpeedError, SetAxesThresholdError};
 use std::mem::forget;
 use std::os::fd::OwnedFd;
 use tokio::io::unix::AsyncFd;
@@ -108,6 +108,8 @@ fn handle_command(state: &mut State, command: Command) {
             handle_command_set_axes_threshold(state, threshold, reply),
         Command::SetAxesInverted { inverted, reply } =>
             handle_command_set_axes_inverted(state, inverted, reply),
+        Command::SetAxesMapping { mapping, reply } =>
+            handle_command_set_axes_mapping(state, mapping, reply),
     }
 }
 
@@ -217,7 +219,7 @@ fn handle_command_set_axes_speed(
 
 fn handle_command_set_axes_threshold(
     _state: &mut State,
-    threshold: [i32; 6],
+    threshold: [u8; 6],
     reply: oneshot::Sender<Result<(), SetAxesThresholdError>>
 ) {
     debug!("Setting axes threshold.");
@@ -236,7 +238,6 @@ fn handle_command_set_axes_threshold(
     }
 }
 
-
 fn handle_command_set_axes_inverted(
     _state: &mut State,
     inverted: [bool; 6],
@@ -254,6 +255,27 @@ fn handle_command_set_axes_inverted(
             error!("Failed to set axes inverted: {cause}");
             reply.send(Err(cause))
                 .expect("Failed to send SetAxesInverted failure reply");
+        }
+    }
+}
+
+fn handle_command_set_axes_mapping(
+    _state: &mut State,
+    mapping: [u8; 6],
+    reply: oneshot::Sender<Result<(), SetAxesMappingError>>
+) {
+    debug!("Setting axes mapping.");
+
+    match libspnav::set_axes_mapping(mapping) {
+        Ok(device) => {
+            reply.send(Ok(device))
+                .expect("Failed to send SetAxesMapping success reply");
+            info!("Set axes mapping successfully: {mapping:?}")
+        }
+        Err(cause) => {
+            error!("Failed to set axes mapping: {cause}");
+            reply.send(Err(cause))
+                .expect("Failed to send SetAxesMapping failure reply");
         }
     }
 }

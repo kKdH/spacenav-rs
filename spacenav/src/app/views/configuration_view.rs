@@ -9,6 +9,9 @@ use iced_aw::{TabBar, TabLabel};
 use spacenav_settings::{NavigationFunctionName, NavigationFunctionSettings};
 
 pub fn configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
+
+    let navigation_function_images = app.image_handles.all_axes();
+
     let tab_bar = {
         let mut tab_bar = app.profiles.profiles.iter()
             .map(|(id, profile)| (id.to_owned(), TabLabel::Text(Clone::clone(&profile.title))))
@@ -34,14 +37,14 @@ pub fn configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
                         let column = widget::Column::new()
                             .spacing(10);
                         profile.navigation.iter()
-                            .zip(app.image_handles.all_axes())
-                            .fold(column, |column, ((function_name, function_settings), function_image)| {
+                            .map(|(function_name, function_settings)| (function_name, function_settings, Clone::clone(&navigation_function_images[function_settings.axis as usize])))
+                            .fold(column, |column, (function_name, function_settings, function_image)| {
                                 let navigation_settings_row = navigation_settings_row(
                                     Clone::clone(&profile_id),
                                     *function_name,
                                     function_image,
                                     function_settings,
-                                    app.axes_values[function_settings.axis]
+                                    app.axes_values[function_settings.axis as usize]
                                 );
                                 column.push(navigation_settings_row)
                             })
@@ -129,7 +132,7 @@ fn navigation_settings_speed_row(profile: String, axis: NavigationFunctionName, 
         .into()
 }
 
-fn navigation_settings_threshold_row(profile: String, axis: NavigationFunctionName, threshold: i32) -> Element<'static, Message> {
+fn navigation_settings_threshold_row(profile: String, axis: NavigationFunctionName, threshold: u8) -> Element<'static, Message> {
     let update_message = Message::UpdateAxisThreshold { profile: Clone::clone(&profile), function_name: axis };
     widget::Row::new()
         .spacing(10)
@@ -138,7 +141,7 @@ fn navigation_settings_threshold_row(profile: String, axis: NavigationFunctionNa
             .width(100)
             .align_x(Alignment::End)
         )
-        .push(widget::Slider::new(0_i32..=255_i32, threshold, move |threshold| Message::AxisThresholdChanged { profile: Clone::clone(&profile), function_name: axis, threshold })
+        .push(widget::Slider::new(u8::MIN..=u8::MAX, threshold, move |threshold| Message::AxisThresholdChanged { profile: Clone::clone(&profile), function_name: axis, threshold })
             .on_release(update_message)
             .step(1))
         .into()

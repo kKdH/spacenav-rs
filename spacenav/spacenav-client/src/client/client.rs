@@ -114,7 +114,7 @@ impl SpaceNavClient {
         }
     }
 
-    pub fn set_axes_threshold(&self, threshold: [i32; 6]) -> impl Future<Output=Result<(), ()>> + 'static {
+    pub fn set_axes_threshold(&self, threshold: [u8; 6]) -> impl Future<Output=Result<(), ()>> + 'static {
 
         let sender = Clone::clone(&self.command_sender)
             .expect("Sender should be valid until shutdown");
@@ -141,6 +141,23 @@ impl SpaceNavClient {
 
         async move {
             sender.send(Command::new_command_set_axes_inverted(inverted, reply_sender)).await
+                .map_err(|_| ())?;
+            reply_receiver.await
+                .map(|result| result.map_err(|_| ()))
+                .map_err(|_| ())?
+        }
+    }
+
+    pub fn set_axes_mapping(&self, mapping: [u8; 6]) -> impl Future<Output=Result<(), ()>> + 'static {
+
+        let sender = Clone::clone(&self.command_sender)
+            .expect("Sender should be valid until shutdown");
+        let (reply_sender, reply_receiver) = oneshot::channel();
+
+        debug!("Setting axes mapping: {mapping:?}");
+
+        async move {
+            sender.send(Command::new_command_set_axes_mapping(mapping, reply_sender)).await
                 .map_err(|_| ())?;
             reply_receiver.await
                 .map(|result| result.map_err(|_| ()))

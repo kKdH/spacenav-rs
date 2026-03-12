@@ -37,7 +37,7 @@ impl std::fmt::Display for SetAxesThresholdError {
     }
 }
 
-pub fn set_axes_threshold(values: [i32; 6]) -> Result<(), SetAxesThresholdError> {
+pub fn set_axes_threshold(values: [u8; 6]) -> Result<(), SetAxesThresholdError> {
 
     for (axis, value) in values.into_iter().enumerate() {
         let result = unsafe {
@@ -75,6 +75,31 @@ pub fn set_axes_inverted(values: [bool; 6]) -> Result<(), SetAxesInvertedError> 
     };
     if result != 0 {
         return Err(SetAxesInvertedError)
+    }
+
+    Ok(())
+}
+
+#[derive(Debug)]
+pub struct SetAxesMappingError;
+
+impl std::error::Error for SetAxesMappingError {}
+
+impl std::fmt::Display for SetAxesMappingError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Failed to set axes inverted")
+    }
+}
+
+pub fn set_axes_mapping(values: [u8; 6]) -> Result<(), SetAxesMappingError> {
+
+    for (axis, value) in values.into_iter().enumerate() {
+        let result = unsafe {
+            libspnav::spnav_cfg_set_axismap(axis as c_int, value as c_int) as i32
+        };
+        if result != 0 {
+            return Err(SetAxesMappingError)
+        }
     }
 
     Ok(())

@@ -40,11 +40,23 @@ pub enum NavigationFunctionName {
     Roll,
 }
 
+impl NavigationFunctionName {
+
+    pub const FUNCTION_NAMES: &'static [NavigationFunctionName] = &[
+        NavigationFunctionName::LeftRight,
+        NavigationFunctionName::UpDown,
+        NavigationFunctionName::FwdBwd,
+        NavigationFunctionName::Pitch,
+        NavigationFunctionName::Yaw,
+        NavigationFunctionName::Roll,
+    ];
+}
+
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct NavigationFunctionSettings {
-    pub axis: usize,
+    pub axis: u8,
     pub speed: f32,
-    pub threshold: i32,
+    pub threshold: u8,
     pub invert: bool,
 }
