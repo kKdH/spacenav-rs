@@ -1,13 +1,15 @@
 use crate::app::views;
-use crate::app::views::{configuration_view, header_view};
+use crate::app::views::{header_view, profiles_view};
 use crate::assets::ImageHandles;
 use crate::util::{load_profiles, store_profiles};
 use iced::widget::container;
-use iced::{widget, Fill, Task};
+use iced::widget::image::Handle;
+use iced::{widget, Task};
 use iced::{Element, Subscription};
 use iced_toaster::{Toast, ToastId, ToastLevel, Toaster};
 use spacenav_client::SpaceNavClient;
 use spacenav_settings::{NavigationFunctionName, Profile, Profiles};
+use std::collections::BTreeMap;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use views::footer_view;
@@ -21,6 +23,7 @@ pub struct SpaceNavCockpit {
     pub axes_values: [f32; 6],
     pub toaster: Toaster<Message>,
     pub image_handles: ImageHandles,
+    pub profiles_image_handle: BTreeMap<String, Handle>,
 }
 
 #[derive(Debug, Clone)]
@@ -42,7 +45,7 @@ pub enum Message {
     ClientEvent(libspnav::Event),
     ClientGetDeviceEvent(Result<libspnav::Device, ()>),
     ClientSetAxesSpeedEvent(Result<(), ()>),
-    TabSelected(String),
+    ProfileSelected(String),
     PushToast(Toast<Message>),
     DismissToast(ToastId),
     SetHoveredToast(ToastId, bool),
@@ -67,6 +70,7 @@ impl SpaceNavCockpit {
             axes_values: [0_f32; 6],
             toaster: iced_toaster::toaster(),
             image_handles: ImageHandles::new(),
+            profiles_image_handle: BTreeMap::new(),
         }
     }
 
@@ -234,14 +238,19 @@ impl SpaceNavCockpit {
                 }
                 Task::none()
             }
-            Message::TabSelected(profile_id) => {
-                self.selected_profile = Some(profile_id);
-                Task::batch(vec![
-                    self.update_axes_speed(),
-                    self.update_axes_threshold(),
-                    self.update_axes_inverted(),
-                    self.update_axes_mapping(),
-                ])
+            Message::ProfileSelected(profile_id) => {
+                if self.selected_profile.as_ref().is_none_or(|p| p != &profile_id) {
+                    self.selected_profile = Some(profile_id);
+                    Task::batch(vec![
+                        self.update_axes_speed(),
+                        self.update_axes_threshold(),
+                        self.update_axes_inverted(),
+                        self.update_axes_mapping(),
+                    ])
+                }
+                else {
+                    Task::none()
+                }
             }
             Message::PushToast(toast) => {
                 self.toaster.push(toast);
@@ -352,7 +361,6 @@ impl SpaceNavCockpit {
         Task::perform(set_axes_threshold, Message::ClientSetAxesSpeedEvent)
     }
 
-
     fn update_axes_inverted(&mut self) -> Task<Message> {
 
         if !matches!(self.state, State::Connected) {
@@ -408,8 +416,7 @@ impl SpaceNavCockpit {
         let content = container(
             widget::Column::new()
                 .push(header_view(self))
-                .push(configuration_view(self))
-                .push(widget::Space::new().height(Fill))
+                .push(profiles_view(self))
                 .push(footer_view(self))
             );
 

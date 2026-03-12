@@ -3,7 +3,7 @@ use crate::app::SpaceNavCockpit;
 use iced::widget;
 use iced::{Element, Fill};
 
-pub fn footer_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
+pub fn footer_view(_app: &SpaceNavCockpit) -> Element<'_, Message> {
 
     let content = widget::Row::new()
         .padding(10)

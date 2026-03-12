@@ -3,29 +3,16 @@ use crate::app::widgets::axis_bar;
 use crate::app::SpaceNavCockpit;
 use iced::alignment::Vertical;
 use iced::widget::text::Wrapping;
-use iced::widget::{image};
+use iced::widget::image;
 use iced::{widget, Alignment, Element, Fill, Padding};
-use iced_aw::{TabBar, TabLabel};
 use spacenav_settings::{NavigationFunctionName, NavigationFunctionSettings};
 
-pub fn configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
+pub fn navigation_configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
 
     let navigation_function_images = app.image_handles.all_axes();
 
-    let tab_bar = {
-        let mut tab_bar = app.profiles.profiles.iter()
-            .map(|(id, profile)| (id.to_owned(), TabLabel::Text(Clone::clone(&profile.title))))
-            .fold(TabBar::new(Message::TabSelected), |tab_bar, (key, tab)| {
-                tab_bar.push(key, tab)
-            });
-        if let Some(profile_id) = &app.selected_profile {
-            tab_bar = tab_bar.set_active_tab(profile_id)
-        };
-        tab_bar
-    };
-
     let content = {
-        let content = widget::Column::new().spacing(10).padding(10).push(tab_bar);
+        let content = widget::Column::new().spacing(10);
         match &app.selected_profile {
             None => content,
             Some(profile_id) => {
