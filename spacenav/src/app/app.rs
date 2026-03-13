@@ -53,6 +53,7 @@ pub enum Message {
     UpdateAxisSpeed { profile_id: ProfileId, function_name: NavigationFunctionName },
     AxisThresholdChanged { profile_id: ProfileId, function_name: NavigationFunctionName, threshold: u8 },
     AxisInvertedChanged { profile_id: ProfileId, function_name: NavigationFunctionName, inverted: bool },
+    AxisDisabledChanged { profile_id: ProfileId, function_name: NavigationFunctionName, disabled: bool },
     UpdateAxisThreshold { profile_id: ProfileId, function_name: NavigationFunctionName },
     AxisMappingChanged { profile_id: ProfileId, function_name: NavigationFunctionName, axis: u8 },
     Tick,
@@ -107,7 +108,8 @@ impl SpaceNavCockpit {
                             .level(ToastLevel::Error));
                     }
                 }
-                Task::none()
+                let first = self.profiles.profiles.keys().next().expect("There should be at least one profile.");
+                Task::done(Message::ProfileSelected(first.to_owned()))
             }
             Message::StoreSettings => {
                 match store_profiles(&self.profiles) {
@@ -268,7 +270,7 @@ impl SpaceNavCockpit {
                 self.toaster.set_hovered(id, hovered);
                 Task::none()
             }
-            Message::AxisSpeedChanged { profile_id: profile_id, function_name, speed } => {
+            Message::AxisSpeedChanged { profile_id, function_name, speed } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
                         let speed = speed.max(0_f32).min(2_f32);
@@ -281,7 +283,7 @@ impl SpaceNavCockpit {
             Message::UpdateAxisSpeed { profile_id: _profile_id, function_name: _function_name } => {
                 self.update_axes_speed()
             }
-            Message::AxisThresholdChanged { profile_id: profile_id, function_name, threshold } => {
+            Message::AxisThresholdChanged { profile_id, function_name, threshold } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
                         function_settings.threshold = threshold;
@@ -292,15 +294,23 @@ impl SpaceNavCockpit {
             Message::UpdateAxisThreshold { profile_id: _profile_id, function_name: _axis } => {
                 self.update_axes_threshold()
             }
-            Message::AxisInvertedChanged { profile_id: profile_id, function_name, inverted: invert } => {
+            Message::AxisInvertedChanged { profile_id, function_name, inverted: invert } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
-                        function_settings.invert = invert;
+                        function_settings.inverted = invert;
                     }
                 }
                 self.update_axes_inverted()
             }
-            Message::AxisMappingChanged { profile_id: profile_id, function_name, axis } => {
+            Message::AxisDisabledChanged { profile_id, function_name, disabled } => {
+                if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
+                    if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
+                        function_settings.disabled = disabled;
+                    }
+                }
+                self.update_axes_speed()
+            }
+            Message::AxisMappingChanged { profile_id, function_name, axis } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
                         function_settings.axis = axis;
@@ -328,7 +338,7 @@ impl SpaceNavCockpit {
         // TODO: This will fail if there are more or less than 6 axes.
         // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
         let speed: [f32; 6] = profile.navigation.values()
-            .map(|function_settings| function_settings.speed)
+            .map(|function_settings| if function_settings.disabled { 0_f32 } else { function_settings.speed })
             .collect::<Vec<_>>()
             .try_into()
             .expect("There should be exactly six axes.");
@@ -378,7 +388,7 @@ impl SpaceNavCockpit {
         // TODO: This will fail if there are more or less than 6 axes.
         // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
         let inverted: [bool; 6] = profile.navigation.values()
-            .map(|function_settings| function_settings.invert)
+            .map(|function_settings| function_settings.inverted)
             .collect::<Vec<_>>()
             .try_into()
             .expect("There should be exactly six axes.");

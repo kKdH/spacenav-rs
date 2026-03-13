@@ -91,7 +91,7 @@ fn navigation_settings_row(
         .spacing(10)
         .push(navigation_settings_speed_row(Clone::clone(&profile_id), function_name, function_settings.speed))
         .push(navigation_settings_threshold_row(Clone::clone(&profile_id), function_name, function_settings.threshold))
-        .push(navigation_settings_invert_row(profile_id, function_name, function_settings.invert));
+        .push(navigation_settings_inverted_and_disabled_row(profile_id, function_name, function_settings.inverted, function_settings.disabled));
 
     widget::Container::new(
         widget::Row::new()
@@ -134,7 +134,18 @@ fn navigation_settings_threshold_row(profile_id: ProfileId, axis: NavigationFunc
         .into()
 }
 
-fn navigation_settings_invert_row(profile_id: ProfileId, axis: NavigationFunctionName, inverted: bool) -> Element<'static, Message> {
+fn navigation_settings_inverted_and_disabled_row(profile_id: ProfileId, function_name: NavigationFunctionName, inverted: bool, disabled: bool) -> Element<'static, Message> {
+
+    let on_toggle_inverted = {
+        let profile_id = Clone::clone(&profile_id);
+        move |inverted| Message::AxisInvertedChanged { profile_id: Clone::clone(&profile_id), function_name, inverted }
+    };
+
+    let on_toggle_disabled = {
+        let profile_id = Clone::clone(&profile_id);
+        move |disabled| Message::AxisDisabledChanged { profile_id: Clone::clone(&profile_id), function_name, disabled }
+    };
+
     widget::Row::new()
         .spacing(10)
         .align_y(Vertical::Center)
@@ -143,7 +154,13 @@ fn navigation_settings_invert_row(profile_id: ProfileId, axis: NavigationFunctio
             .align_x(Alignment::End)
         )
         .push(widget::Checkbox::new(inverted)
-            .on_toggle(move |inverted| Message::AxisInvertedChanged { profile_id: Clone::clone(&profile_id), function_name: axis, inverted }))
+            .on_toggle(on_toggle_inverted))
+        .push(widget::text("Disabled:")
+            .width(100)
+            .align_x(Alignment::End)
+        )
+        .push(widget::Checkbox::new(disabled)
+            .on_toggle(on_toggle_disabled))
         .into()
 }
 

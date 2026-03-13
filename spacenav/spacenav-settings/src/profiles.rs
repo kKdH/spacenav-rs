@@ -111,5 +111,8 @@ pub struct NavigationFunctionSettings {
     pub axis: u8,
     pub speed: f32,
     pub threshold: u8,
-    pub invert: bool,
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub inverted: bool,
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub disabled: bool,
 }
