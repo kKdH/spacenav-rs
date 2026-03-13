@@ -1,4 +1,3 @@
-use std::collections::btree_map::Iter;
 use directories::ProjectDirs;
 use iced::widget::image;
 use spacenav_settings::{Profile, ProfileIcon, ProfileId, Profiles};

@@ -1,4 +1,4 @@
-use crate::app::app::{Message, State};
+use crate::app::app::Message;
 use crate::app::SpaceNavCockpit;
 use iced::widget;
 use iced::{Element, Fill};

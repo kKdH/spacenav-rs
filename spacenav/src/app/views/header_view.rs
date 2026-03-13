@@ -14,7 +14,7 @@ pub fn header_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
         let mut style = widget::button::primary(theme, status);
         style.border = iced::border::rounded(5.0);
         style
-    };
+    }
 
     let connect_button = match app.state {
         State::Disconnected => {

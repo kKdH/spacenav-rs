@@ -1,9 +1,9 @@
-use std::ops::RangeInclusive;
-use iced::{Color, Point, Rectangle, Renderer, Size, Theme};
 use iced::border::Radius;
 use iced::mouse::Cursor;
 use iced::widget::canvas;
 use iced::widget::canvas::Geometry;
+use iced::{Point, Rectangle, Renderer, Size, Theme};
+use std::ops::RangeInclusive;
 
 pub fn axis_bar(range: RangeInclusive<f32>, value: f32) -> AxisBar {
     AxisBar::new(range, value)

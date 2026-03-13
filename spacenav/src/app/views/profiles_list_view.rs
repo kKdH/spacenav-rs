@@ -1,12 +1,11 @@
 use crate::app::app::Message;
 use crate::app::SpaceNavCockpit;
-use iced::{color, widget, Border, Element};
 use iced::advanced::image::Handle;
-use iced::advanced::Widget;
 use iced::mouse::Interaction;
-use iced_font_awesome::fa_icon_solid;
-use spacenav_settings::{Profile, ProfileIcon, ProfileId};
 use iced::widget::image;
+use iced::{color, widget, Border, Element};
+use iced_font_awesome::fa_icon_solid;
+use spacenav_settings::{Profile, ProfileId};
 
 pub fn profile_list_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
 
@@ -78,7 +77,6 @@ fn profile_icon(icon: Option<Handle>) -> Element<'static, Message> {
     };
     widget::Container::new(icon)
         .padding(10)
-        .style(|theme| widget::container::rounded_box(theme).color(theme.palette().warning)
-            .border(Border::default().color(theme.palette().primary)))
+        .style(|theme| widget::container::rounded_box(theme))
         .into()
 }
