@@ -1,5 +1,8 @@
+use std::collections::btree_map::Iter;
 use directories::ProjectDirs;
-use spacenav_settings::Profiles;
+use iced::widget::image;
+use spacenav_settings::{Profile, ProfileIcon, ProfileId, Profiles};
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 pub fn load_profiles() -> Result<Profiles, ()> {
@@ -21,10 +24,36 @@ pub fn store_profiles(profiles: &Profiles) -> Result<(), ()> {
     Ok(())
 }
 
-fn profile_toml_path() -> Result<PathBuf, ()> {
+pub fn load_profile_icons<'a>(profiles: impl Iterator<Item = (&'a ProfileId, &'a Profile)>) -> Result<BTreeMap<ProfileId, image::Handle>, ()> {
+
+    let config_dir = config_dir()?;
+    let mut loaded_icons = BTreeMap::<ProfileId, image::Handle>::new();
+
+    for (profile_id, profile) in profiles {
+        match &profile.icon {
+            ProfileIcon::None => {}
+            ProfileIcon::Path { path } => {
+                let path = PathBuf::from(path);
+                let path = if path.is_relative() {
+                    config_dir.join(path)
+                }
+                else {
+                    path
+                };
+                let icon = image::Handle::from_path(path);
+                loaded_icons.insert(Clone::clone(profile_id), icon);
+            }
+        }
+    }
+
+    Ok(loaded_icons)
+}
+
+fn config_dir() -> Result<PathBuf, ()> {
     let proj_dirs = ProjectDirs::from("", "", "spacenav").ok_or(())?;
+    Ok(proj_dirs.config_dir().to_path_buf())
+}
 
-    let path = proj_dirs.config_dir().join("profiles.toml");
-
-    Ok(path)
+fn profile_toml_path() -> Result<PathBuf, ()> {
+    Ok(config_dir()?.join("profiles.toml"))
 }

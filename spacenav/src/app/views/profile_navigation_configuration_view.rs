@@ -5,7 +5,7 @@ use iced::alignment::Vertical;
 use iced::widget::text::Wrapping;
 use iced::widget::image;
 use iced::{widget, Alignment, Element, Fill, Padding};
-use spacenav_settings::{NavigationFunctionName, NavigationFunctionSettings};
+use spacenav_settings::{NavigationFunctionName, NavigationFunctionSettings, ProfileId};
 
 pub fn navigation_configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
 
@@ -47,7 +47,7 @@ pub fn navigation_configuration_view(app: &SpaceNavCockpit) -> Element<'_, Messa
 }
 
 fn navigation_settings_row(
-    profile_id: String,
+    profile_id: ProfileId,
     function_name: NavigationFunctionName,
     function_image: image::Handle,
     function_settings: &NavigationFunctionSettings,
@@ -75,7 +75,7 @@ fn navigation_settings_row(
                             .spacing(5)
                             .align_y(Vertical::Center)
                             .push(widget::text("Axis:"))
-                            .push(widget::PickList::new(vec![0, 1, 2, 3, 4, 5], Some(function_settings.axis), move |axis| Message::AxisMappingChanged { profile: Clone::clone(&profile_id), function_name, axis })
+                            .push(widget::PickList::new(vec![0, 1, 2, 3, 4, 5], Some(function_settings.axis), move |axis| Message::AxisMappingChanged { profile_id: Clone::clone(&profile_id), function_name, axis })
                                 .width(Fill))
                         )
                     )
@@ -104,8 +104,8 @@ fn navigation_settings_row(
         .into()
 }
 
-fn navigation_settings_speed_row(profile: String, axis: NavigationFunctionName, speed: f32) -> Element<'static, Message> {
-    let update_message = Message::UpdateAxisSpeed { profile: Clone::clone(&profile), function_name: axis };
+fn navigation_settings_speed_row(profile: ProfileId, axis: NavigationFunctionName, speed: f32) -> Element<'static, Message> {
+    let update_message = Message::UpdateAxisSpeed { profile_id: Clone::clone(&profile), function_name: axis };
     widget::Row::new()
         .spacing(10)
         .align_y(Vertical::Center)
@@ -113,14 +113,14 @@ fn navigation_settings_speed_row(profile: String, axis: NavigationFunctionName, 
             .width(100)
             .align_x(Alignment::End)
         )
-        .push(widget::Slider::new(0_f32..=2_f32, speed, move |speed| Message::AxisSpeedChanged { profile: Clone::clone(&profile), function_name: axis, speed })
+        .push(widget::Slider::new(0_f32..=2_f32, speed, move |speed| Message::AxisSpeedChanged { profile_id: Clone::clone(&profile), function_name: axis, speed })
             .on_release(update_message)
             .step(0.01))
         .into()
 }
 
-fn navigation_settings_threshold_row(profile: String, axis: NavigationFunctionName, threshold: u8) -> Element<'static, Message> {
-    let update_message = Message::UpdateAxisThreshold { profile: Clone::clone(&profile), function_name: axis };
+fn navigation_settings_threshold_row(profile_id: ProfileId, axis: NavigationFunctionName, threshold: u8) -> Element<'static, Message> {
+    let update_message = Message::UpdateAxisThreshold { profile_id: Clone::clone(&profile_id), function_name: axis };
     widget::Row::new()
         .spacing(10)
         .align_y(Vertical::Center)
@@ -128,13 +128,13 @@ fn navigation_settings_threshold_row(profile: String, axis: NavigationFunctionNa
             .width(100)
             .align_x(Alignment::End)
         )
-        .push(widget::Slider::new(u8::MIN..=u8::MAX, threshold, move |threshold| Message::AxisThresholdChanged { profile: Clone::clone(&profile), function_name: axis, threshold })
+        .push(widget::Slider::new(u8::MIN..=u8::MAX, threshold, move |threshold| Message::AxisThresholdChanged { profile_id: Clone::clone(&profile_id), function_name: axis, threshold })
             .on_release(update_message)
             .step(1))
         .into()
 }
 
-fn navigation_settings_invert_row(profile: String, axis: NavigationFunctionName, inverted: bool) -> Element<'static, Message> {
+fn navigation_settings_invert_row(profile_id: ProfileId, axis: NavigationFunctionName, inverted: bool) -> Element<'static, Message> {
     widget::Row::new()
         .spacing(10)
         .align_y(Vertical::Center)
@@ -143,7 +143,7 @@ fn navigation_settings_invert_row(profile: String, axis: NavigationFunctionName,
             .align_x(Alignment::End)
         )
         .push(widget::Checkbox::new(inverted)
-            .on_toggle(move |inverted| Message::AxisInvertedChanged { profile: Clone::clone(&profile), function_name: axis, inverted }))
+            .on_toggle(move |inverted| Message::AxisInvertedChanged { profile_id: Clone::clone(&profile_id), function_name: axis, inverted }))
         .into()
 }
 

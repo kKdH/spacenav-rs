@@ -38,8 +38,9 @@ fn serialize_toml(profiles: &Profiles) -> Result<String, WriteProfileError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    pub use googletest::prelude::*;
+    use googletest::prelude::*;
     use indoc::indoc;
+    use crate::profiles::ProfileId;
 
     #[test]
     fn test_read_and_write_toml() {
@@ -55,8 +56,8 @@ mod tests {
         let profiles = deserialize_toml(example).unwrap();
 
         assert_that!(profiles.profiles, len(eq(2)));
-        assert_that!(profiles.profiles["p1"].title, eq("Profile 1"));
-        assert_that!(profiles.profiles["p2"].title, eq("Profile 2"));
+        assert_that!(profiles.profiles[&ProfileId::try_from("p1").unwrap()].name, eq("Profile 1"));
+        assert_that!(profiles.profiles[&ProfileId::try_from("p2").unwrap()].name, eq("Profile 2"));
 
         let content = serialize_toml(&profiles).unwrap();
 

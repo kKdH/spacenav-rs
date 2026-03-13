@@ -1,14 +1,14 @@
 use crate::app::views;
 use crate::app::views::{header_view, profiles_view};
 use crate::assets::ImageHandles;
-use crate::util::{load_profiles, store_profiles};
+use crate::util::{load_profiles, load_profile_icons, store_profiles};
 use iced::widget::container;
 use iced::widget::image::Handle;
 use iced::{widget, Task};
 use iced::{Element, Subscription};
 use iced_toaster::{Toast, ToastId, ToastLevel, Toaster};
 use spacenav_client::SpaceNavClient;
-use spacenav_settings::{NavigationFunctionName, Profile, Profiles};
+use spacenav_settings::{NavigationFunctionName, Profile, ProfileId, Profiles};
 use std::collections::BTreeMap;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
@@ -17,13 +17,13 @@ use views::footer_view;
 pub struct SpaceNavCockpit {
     pub state: State,
     pub profiles: Profiles,
-    pub selected_profile: Option<String>,
+    pub selected_profile: Option<ProfileId>,
     pub client: Option<SpaceNavClient>,
     pub device: Option<libspnav::Device>,
     pub axes_values: [f32; 6],
     pub toaster: Toaster<Message>,
     pub image_handles: ImageHandles,
-    pub profiles_image_handle: BTreeMap<String, Handle>,
+    pub profiles_icon_handles: BTreeMap<ProfileId, Handle>,
 }
 
 #[derive(Debug, Clone)]
@@ -45,16 +45,16 @@ pub enum Message {
     ClientEvent(libspnav::Event),
     ClientGetDeviceEvent(Result<libspnav::Device, ()>),
     ClientSetAxesSpeedEvent(Result<(), ()>),
-    ProfileSelected(String),
+    ProfileSelected(ProfileId),
     PushToast(Toast<Message>),
     DismissToast(ToastId),
     SetHoveredToast(ToastId, bool),
-    AxisSpeedChanged { profile: String, function_name: NavigationFunctionName, speed: f32 },
-    UpdateAxisSpeed { profile: String, function_name: NavigationFunctionName },
-    AxisThresholdChanged { profile: String, function_name: NavigationFunctionName, threshold: u8 },
-    AxisInvertedChanged { profile: String, function_name: NavigationFunctionName, inverted: bool },
-    UpdateAxisThreshold { profile: String, function_name: NavigationFunctionName },
-    AxisMappingChanged { profile: String, function_name: NavigationFunctionName, axis: u8 },
+    AxisSpeedChanged { profile_id: ProfileId, function_name: NavigationFunctionName, speed: f32 },
+    UpdateAxisSpeed { profile_id: ProfileId, function_name: NavigationFunctionName },
+    AxisThresholdChanged { profile_id: ProfileId, function_name: NavigationFunctionName, threshold: u8 },
+    AxisInvertedChanged { profile_id: ProfileId, function_name: NavigationFunctionName, inverted: bool },
+    UpdateAxisThreshold { profile_id: ProfileId, function_name: NavigationFunctionName },
+    AxisMappingChanged { profile_id: ProfileId, function_name: NavigationFunctionName, axis: u8 },
     Tick,
 }
 
@@ -70,7 +70,7 @@ impl SpaceNavCockpit {
             axes_values: [0_f32; 6],
             toaster: iced_toaster::toaster(),
             image_handles: ImageHandles::new(),
-            profiles_image_handle: BTreeMap::new(),
+            profiles_icon_handles: BTreeMap::new(),
         }
     }
 
@@ -87,9 +87,13 @@ impl SpaceNavCockpit {
                 match load_profiles() {
                     Ok(mut profiles) => {
                         if profiles.is_empty() {
-                            profiles.profiles.insert(String::from("default"), Profile::new(String::from("Default")));
+                            profiles.profiles.insert(
+                                ProfileId::try_from("default").expect("Should be a valid ProfileId"),
+                                Profile::new(String::from("Default"))
+                            );
                         }
                         self.profiles = profiles;
+                        self.profiles_icon_handles = load_profile_icons(self.profiles.profiles.iter()).expect("Failed to load profile icons"); // TODO: Handle error during profile icon loading.
                         self.toaster.push(iced_toaster::toast("Settings loaded successfully.")
                             .title("Success")
                             .duration(3)
@@ -225,7 +229,7 @@ impl SpaceNavCockpit {
                         // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
                         if let Some(profile) = self.selected_profile.as_ref().and_then(|profile_id| self.profiles.profiles.get(profile_id)) {
                             let values = [event.x as f32, event.y as f32, event.z as f32, event.rx as f32, event.ry as f32, event.rz as f32];
-                            NavigationFunctionName::FUNCTION_NAMES.iter()
+                            NavigationFunctionName::NAVIGATION_FUNCTION_NAMES.iter()
                                 .flat_map(|function_name| profile.navigation.get(function_name))
                                 .map(|function_settings| function_settings.axis as usize)
                                 .zip(values.into_iter())
@@ -264,7 +268,7 @@ impl SpaceNavCockpit {
                 self.toaster.set_hovered(id, hovered);
                 Task::none()
             }
-            Message::AxisSpeedChanged { profile: profile_id, function_name, speed } => {
+            Message::AxisSpeedChanged { profile_id: profile_id, function_name, speed } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
                         let speed = speed.max(0_f32).min(2_f32);
@@ -274,10 +278,10 @@ impl SpaceNavCockpit {
                 }
                 Task::none()
             }
-            Message::UpdateAxisSpeed { profile: _profile_id, function_name: _function_name } => {
+            Message::UpdateAxisSpeed { profile_id: _profile_id, function_name: _function_name } => {
                 self.update_axes_speed()
             }
-            Message::AxisThresholdChanged { profile: profile_id, function_name, threshold } => {
+            Message::AxisThresholdChanged { profile_id: profile_id, function_name, threshold } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
                         function_settings.threshold = threshold;
@@ -285,10 +289,10 @@ impl SpaceNavCockpit {
                 }
                 Task::none()
             }
-            Message::UpdateAxisThreshold { profile: _profile_id, function_name: _axis } => {
+            Message::UpdateAxisThreshold { profile_id: _profile_id, function_name: _axis } => {
                 self.update_axes_threshold()
             }
-            Message::AxisInvertedChanged { profile: profile_id, function_name, inverted: invert } => {
+            Message::AxisInvertedChanged { profile_id: profile_id, function_name, inverted: invert } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
                         function_settings.invert = invert;
@@ -296,7 +300,7 @@ impl SpaceNavCockpit {
                 }
                 self.update_axes_inverted()
             }
-            Message::AxisMappingChanged { profile: profile_id, function_name, axis } => {
+            Message::AxisMappingChanged { profile_id: profile_id, function_name, axis } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
                         function_settings.axis = axis;
