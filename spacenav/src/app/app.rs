@@ -18,12 +18,19 @@ pub struct SpaceNavCockpit {
     pub state: State,
     pub profiles: Profiles,
     pub selected_profile: Option<ProfileId>,
+    pub active_profile_configuration_view: ProfileConfigurationView,
     pub client: Option<SpaceNavClient>,
     pub device: Option<libspnav::Device>,
     pub axes_values: [f32; 6],
     pub toaster: Toaster<Message>,
     pub image_handles: ImageHandles,
     pub profiles_icon_handles: BTreeMap<ProfileId, Handle>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ProfileConfigurationView {
+    Navigation,
+    Keybindings,
 }
 
 #[derive(Debug, Clone)]
@@ -46,6 +53,8 @@ pub enum Message {
     ClientGetDeviceEvent(Result<libspnav::Device, ()>),
     ClientSetAxesSpeedEvent(Result<(), ()>),
     ProfileSelected(ProfileId),
+    ProfileNavigationConfigurationViewActivated(ProfileId),
+    ProfileKeybindingsConfigurationViewActivated(ProfileId),
     PushToast(Toast<Message>),
     DismissToast(ToastId),
     SetHoveredToast(ToastId, bool),
@@ -67,6 +76,7 @@ impl SpaceNavCockpit {
             state: State::Disconnected,
             profiles: Profiles::default(),
             selected_profile: None,
+            active_profile_configuration_view: ProfileConfigurationView::Navigation,
             device: None,
             axes_values: [0_f32; 6],
             toaster: iced_toaster::toaster(),
@@ -257,6 +267,14 @@ impl SpaceNavCockpit {
                 else {
                     Task::none()
                 }
+            }
+            Message::ProfileNavigationConfigurationViewActivated(_profile_id) => {
+                self.active_profile_configuration_view = ProfileConfigurationView::Navigation;
+                Task::none()
+            }
+            Message::ProfileKeybindingsConfigurationViewActivated(_profile_id) => {
+                self.active_profile_configuration_view = ProfileConfigurationView::Keybindings;
+                Task::none()
             }
             Message::PushToast(toast) => {
                 self.toaster.push(toast);

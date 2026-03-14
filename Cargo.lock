@@ -3837,6 +3837,7 @@ dependencies = [
  "iced_toaster",
  "image",
  "libspnav",
+ "num-traits",
  "shadow-rs",
  "spacenav-client",
  "spacenav-settings",

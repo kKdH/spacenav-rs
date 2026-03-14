@@ -66,7 +66,7 @@ impl<Message> canvas::Program<Message> for AxisBar {
             canvas::Path::rectangle(Point::new(x, y), Size::new(line_width, bounds.size().height))
         };
 
-        frame.fill(&bar_box, theme.extended_palette().background.strong.color);
+        frame.fill(&bar_box, theme.extended_palette().background.base.color);
         frame.fill(&bar, theme.extended_palette().primary.base.color);
         frame.fill(&mid_line, theme.palette().text);
 

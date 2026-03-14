@@ -1,11 +1,13 @@
+use std::ops::RangeInclusive;
 use crate::app::app::Message;
 use crate::app::widgets::axis_bar;
 use crate::app::SpaceNavCockpit;
 use iced::alignment::Vertical;
 use iced::widget::text::Wrapping;
 use iced::widget::image;
-use iced::{widget, Alignment, Element, Fill, Padding};
+use iced::{border, widget, Alignment, Element, Fill, Padding};
 use spacenav_settings::{NavigationFunctionName, NavigationFunctionSettings, ProfileId};
+use crate::app::views::BORDER_RADIUS;
 
 pub fn navigation_configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
 
@@ -100,12 +102,19 @@ fn navigation_settings_row(
             .padding(Padding::from([5, 10]))
             .align_y(Vertical::Center)
     )
-        .style(|theme| widget::container::rounded_box(theme))
+        .style(|theme| widget::container::Style {
+            background: Some(theme.extended_palette().background.strong.color.into()),
+            border: border::rounded(BORDER_RADIUS),
+            ..Default::default()
+        })
         .into()
 }
 
 fn navigation_settings_speed_row(profile: ProfileId, axis: NavigationFunctionName, speed: f32) -> Element<'static, Message> {
-    let update_message = Message::UpdateAxisSpeed { profile_id: Clone::clone(&profile), function_name: axis };
+    let on_release = {
+        let profile = Clone::clone(&profile);
+        move || Message::UpdateAxisSpeed { profile_id: Clone::clone(&profile), function_name: axis }
+    };
     widget::Row::new()
         .spacing(10)
         .align_y(Vertical::Center)
@@ -113,14 +122,21 @@ fn navigation_settings_speed_row(profile: ProfileId, axis: NavigationFunctionNam
             .width(100)
             .align_x(Alignment::End)
         )
-        .push(widget::Slider::new(0_f32..=2_f32, speed, move |speed| Message::AxisSpeedChanged { profile_id: Clone::clone(&profile), function_name: axis, speed })
-            .on_release(update_message)
-            .step(0.01))
+        .push(slider(
+            0_f32..=2_f32,
+            speed,
+            0.01,
+            move |speed| Message::AxisSpeedChanged { profile_id: Clone::clone(&profile), function_name: axis, speed },
+            on_release
+        ))
         .into()
 }
 
 fn navigation_settings_threshold_row(profile_id: ProfileId, axis: NavigationFunctionName, threshold: u8) -> Element<'static, Message> {
-    let update_message = Message::UpdateAxisThreshold { profile_id: Clone::clone(&profile_id), function_name: axis };
+    let on_release = {
+        let profile_id = Clone::clone(&profile_id);
+        move || Message::UpdateAxisThreshold { profile_id: Clone::clone(&profile_id), function_name: axis }
+    };
     widget::Row::new()
         .spacing(10)
         .align_y(Vertical::Center)
@@ -128,9 +144,13 @@ fn navigation_settings_threshold_row(profile_id: ProfileId, axis: NavigationFunc
             .width(100)
             .align_x(Alignment::End)
         )
-        .push(widget::Slider::new(u8::MIN..=u8::MAX, threshold, move |threshold| Message::AxisThresholdChanged { profile_id: Clone::clone(&profile_id), function_name: axis, threshold })
-            .on_release(update_message)
-            .step(1))
+        .push(slider(
+            u8::MIN..=u8::MAX,
+            threshold,
+            1_u8,
+            move |threshold| Message::AxisThresholdChanged { profile_id: Clone::clone(&profile_id), function_name: axis, threshold },
+            on_release
+        ))
         .into()
 }
 
@@ -161,6 +181,27 @@ fn navigation_settings_inverted_and_disabled_row(profile_id: ProfileId, function
         )
         .push(widget::Checkbox::new(disabled)
             .on_toggle(on_toggle_disabled))
+        .into()
+}
+
+fn slider<'a, T>(
+    range: RangeInclusive<T>,
+    value: T,
+    step: T,
+    on_change: impl Fn(T) -> Message + 'static,
+    on_release: impl Fn() -> Message + 'static
+) -> Element<'static, Message>
+where
+    T: 'a + Copy + From<u8> + PartialOrd + Into<f64> + num_traits::FromPrimitive + 'static,
+{
+    widget::Slider::new(range, value, on_change)
+        .on_release(on_release())
+        .step(step)
+        .style(|theme, status| {
+            let mut style = widget::slider::default(theme, status);
+            style.rail.backgrounds = (theme.palette().background.into(), theme.palette().background.into());
+            style
+        })
         .into()
 }
 
