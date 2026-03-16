@@ -8,7 +8,7 @@ use iced::{widget, Task};
 use iced::{Element, Subscription};
 use iced_toaster::{Toast, ToastId, ToastLevel, Toaster};
 use spacenav_client::SpaceNavClient;
-use spacenav_settings::{MotionFunctionName, Profile, ProfileId, Profiles};
+use spacenav_settings::{Keybinding, MotionFunctionName, Profile, ProfileId, Profiles};
 use std::collections::BTreeMap;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
@@ -65,7 +65,6 @@ pub enum Message {
     AxisDisabledChanged { profile_id: ProfileId, function_name: MotionFunctionName, disabled: bool },
     UpdateAxisThreshold { profile_id: ProfileId, function_name: MotionFunctionName },
     AxisMappingChanged { profile_id: ProfileId, function_name: MotionFunctionName, axis: u8 },
-    KeybindingNameChanged { profile_id: ProfileId, keybinding: usize, name: String },
     KeybindingSelectProfileChanged { profile_id: ProfileId, keybinding: usize, select: Option<ProfileId> },
     KeybindingButtonChanged { profile_id: ProfileId, keybinding: usize, button: Option<u8> },
     Tick,
@@ -339,13 +338,26 @@ impl SpaceNavCockpit {
                 }
                 self.update_axes_mapping()
             }
-            Message::KeybindingNameChanged { .. } => {
+            Message::KeybindingSelectProfileChanged { profile_id, keybinding, select } => {
+                if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
+                    match profile.keybindings.get_mut(keybinding) {
+                        Some(Keybinding::SelectProfile { profile, .. }) => *profile = select,
+                        _ => {}
+                    }
+                }
                 Task::none()
             }
-            Message::KeybindingSelectProfileChanged { .. } => {
-                Task::none()
-            }
-            Message::KeybindingButtonChanged { .. } => {
+            Message::KeybindingButtonChanged { profile_id, keybinding, button } => {
+                if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
+                    if let Some(keybinding) = profile.keybindings.get_mut(keybinding) {
+                        let new_button = button;
+                        match keybinding {
+                            Keybinding::SelectProfile { button, .. } => *button = new_button,
+                            Keybinding::PreviousProfile { button } => *button = new_button,
+                            Keybinding::NextProfile { button } => *button = new_button,
+                        }
+                    }
+                }
                 Task::none()
             }
             Message::Tick => {

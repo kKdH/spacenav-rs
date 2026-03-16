@@ -124,7 +124,7 @@ pub struct MotionFunctionSettings {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(tag = "type"))]
 pub enum Keybinding {
-    SelectProfile { profile: ProfileId, button: u8 },
-    PreviousProfile { button: u8 },
-    NextProfile { button: u8 },
+    SelectProfile { profile: Option<ProfileId>, button: Option<u8> },
+    PreviousProfile { button: Option<u8> },
+    NextProfile { button: Option<u8> },
 }
