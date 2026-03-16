@@ -1,6 +1,7 @@
 mod header_view;
 mod footer_view;
 mod profile_configuration_view;
+mod profile_keybindings_configuration_view;
 mod profile_navigation_configuration_view;
 mod profiles_list_view;
 mod profiles_view;

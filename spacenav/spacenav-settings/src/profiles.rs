@@ -61,6 +61,8 @@ pub struct Profile {
     pub icon: ProfileIcon,
     #[cfg_attr(feature = "serde", serde(default))]
     pub navigation: BTreeMap<NavigationFunctionName, NavigationFunctionSettings>,
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub keybindings: Vec<Keybinding>,
 }
 
 impl Profile {
@@ -69,6 +71,7 @@ impl Profile {
             name,
             icon: ProfileIcon::None,
             navigation: BTreeMap::new(),
+            keybindings: Vec::new(),
         }
     }
 }
@@ -115,4 +118,13 @@ pub struct NavigationFunctionSettings {
     pub inverted: bool,
     #[cfg_attr(feature = "serde", serde(default))]
     pub disabled: bool,
+}
+
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+#[cfg_attr(feature = "serde", serde(tag = "type"))]
+pub enum Keybinding {
+    SelectProfile { profile: ProfileId, button: u8 },
+    PreviousProfile { button: u8 },
+    NextProfile { button: u8 },
 }

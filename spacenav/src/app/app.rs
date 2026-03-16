@@ -65,6 +65,9 @@ pub enum Message {
     AxisDisabledChanged { profile_id: ProfileId, function_name: NavigationFunctionName, disabled: bool },
     UpdateAxisThreshold { profile_id: ProfileId, function_name: NavigationFunctionName },
     AxisMappingChanged { profile_id: ProfileId, function_name: NavigationFunctionName, axis: u8 },
+    KeybindingNameChanged { profile_id: ProfileId, keybinding: usize, name: String },
+    KeybindingSelectProfileChanged { profile_id: ProfileId, keybinding: usize, select: Option<ProfileId> },
+    KeybindingButtonChanged { profile_id: ProfileId, keybinding: usize, button: Option<u8> },
     Tick,
 }
 
@@ -335,6 +338,15 @@ impl SpaceNavCockpit {
                     }
                 }
                 self.update_axes_mapping()
+            }
+            Message::KeybindingNameChanged { .. } => {
+                Task::none()
+            }
+            Message::KeybindingSelectProfileChanged { .. } => {
+                Task::none()
+            }
+            Message::KeybindingButtonChanged { .. } => {
+                Task::none()
             }
             Message::Tick => {
                 self.toaster.dismiss_expired();

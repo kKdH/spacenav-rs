@@ -1,15 +1,15 @@
-use std::ops::RangeInclusive;
 use crate::app::app::Message;
+use crate::app::views::BORDER_RADIUS;
 use crate::app::widgets::axis_bar;
 use crate::app::SpaceNavCockpit;
 use iced::alignment::Vertical;
-use iced::widget::text::Wrapping;
 use iced::widget::image;
+use iced::widget::text::Wrapping;
 use iced::{border, widget, Alignment, Element, Fill, Padding};
 use spacenav_settings::{NavigationFunctionName, NavigationFunctionSettings, ProfileId};
-use crate::app::views::BORDER_RADIUS;
+use std::ops::RangeInclusive;
 
-pub fn navigation_configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
+pub fn profile_navigation_configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
 
     let navigation_function_images = app.image_handles.all_axes();
 
@@ -100,8 +100,7 @@ fn navigation_settings_row(
             .push(axis_information_column)
             .push(speed_and_threshold_column)
             .padding(Padding::from([5, 10]))
-            .align_y(Vertical::Center)
-    )
+            .align_y(Vertical::Center))
         .style(|theme| widget::container::Style {
             background: Some(theme.extended_palette().background.strong.color.into()),
             border: border::rounded(BORDER_RADIUS),
