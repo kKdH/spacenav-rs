@@ -46,11 +46,13 @@ fn profiles_list_item(
                 widget::Row::new()
                     .spacing(16)
                     .push(profile_icon(icon))
-                    .push(widget::Text::new(Clone::clone(&profile.name))
-                        .font(iced::Font {
-                            weight: if selected { iced::font::Weight::Semibold } else { iced::font::Weight::Normal },
-                            ..Default::default()
-                        })
+                    .push(widget::Column::new()
+                        .push(widget::Text::new(Clone::clone(&profile.name))
+                            .font(iced::Font {
+                                weight: iced::font::Weight::Semibold,
+                                ..Default::default()
+                            }))
+                        .push(widget::Text::new(Clone::clone(&profile.variant.as_ref().cloned().unwrap_or_default())))
                     )
             )
             .width(iced::Fill)

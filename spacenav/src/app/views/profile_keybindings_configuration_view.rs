@@ -93,7 +93,8 @@ fn keybinding_select_profile<'a>(
             .push(widget::Text::new("Select:")
                 .width(100)
                 .align_x(Alignment::End))
-            .push(widget::PickList::new(profiles, selected_profile, move |item| Message::KeybindingSelectProfileChanged { profile_id: Clone::clone(&profile_id), keybinding, select: Some(Clone::clone(&item.0.0)) }))
+            .push(widget::PickList::new(profiles, selected_profile, move |item| Message::KeybindingSelectProfileChanged { profile_id: Clone::clone(&profile_id), keybinding, select: Some(Clone::clone(&item.0.0)) })
+                .width(Fill))
         )
         .push(keybinding_button_row(profile_id, keybinding, selected_button));
     let header = widget::Text::new("Select Profile");
@@ -135,6 +136,9 @@ impl <'a> PartialEq for ProfilePickerItem<'a> {
 
 impl <'a> std::fmt::Display for ProfilePickerItem<'a> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.0.1.name)
+        match self.0.1.variant.as_ref() {
+            None => write!(f, "{}", self.0.1.name),
+            Some(variant) => write!(f, "{} ({})", self.0.1.name, variant),
+        }
     }
 }

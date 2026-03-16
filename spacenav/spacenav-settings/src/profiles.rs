@@ -57,6 +57,7 @@ impl std::fmt::Display for ProfileId {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Profile {
     pub name: String,
+    pub variant: Option<String>,
     #[cfg_attr(feature = "serde", serde(default))]
     pub icon: ProfileIcon,
     #[cfg_attr(feature = "serde", serde(default))]
@@ -69,6 +70,7 @@ impl Profile {
     pub fn new(name: String) -> Self {
         Self {
             name,
+            variant: None,
             icon: ProfileIcon::None,
             motions: BTreeMap::new(),
             keybindings: Vec::new(),
