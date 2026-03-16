@@ -6,12 +6,12 @@ use iced::alignment::Vertical;
 use iced::widget::image;
 use iced::widget::text::Wrapping;
 use iced::{border, widget, Alignment, Element, Fill, Padding};
-use spacenav_settings::{NavigationFunctionName, NavigationFunctionSettings, ProfileId};
+use spacenav_settings::{MotionFunctionName, MotionFunctionSettings, ProfileId};
 use std::ops::RangeInclusive;
 
-pub fn profile_navigation_configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
+pub fn profile_motion_configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
 
-    let navigation_function_images = app.image_handles.all_axes();
+    let motion_function_images = app.image_handles.all_axes();
 
     let content = {
         let content = widget::Column::new().spacing(10);
@@ -25,17 +25,17 @@ pub fn profile_navigation_configuration_view(app: &SpaceNavCockpit) -> Element<'
                     let column = {
                         let column = widget::Column::new()
                             .spacing(10);
-                        profile.navigation.iter()
-                            .map(|(function_name, function_settings)| (function_name, function_settings, Clone::clone(&navigation_function_images[function_settings.axis as usize])))
+                        profile.motions.iter()
+                            .map(|(function_name, function_settings)| (function_name, function_settings, Clone::clone(&motion_function_images[function_settings.axis as usize])))
                             .fold(column, |column, (function_name, function_settings, function_image)| {
-                                let navigation_settings_row = navigation_settings_row(
+                                let motion_settings_row = motion_settings_row(
                                     Clone::clone(&profile_id),
                                     *function_name,
                                     function_image,
                                     function_settings,
                                     app.axes_values[function_settings.axis as usize]
                                 );
-                                column.push(navigation_settings_row)
+                                column.push(motion_settings_row)
                             })
                     };
                     row.push(column)
@@ -48,11 +48,11 @@ pub fn profile_navigation_configuration_view(app: &SpaceNavCockpit) -> Element<'
     widget::container(content).into()
 }
 
-fn navigation_settings_row(
+fn motion_settings_row(
     profile_id: ProfileId,
-    function_name: NavigationFunctionName,
+    function_name: MotionFunctionName,
     function_image: image::Handle,
-    function_settings: &NavigationFunctionSettings,
+    function_settings: &MotionFunctionSettings,
     axis_value: f32
 ) -> Element<'static, Message> {
 
@@ -66,7 +66,7 @@ fn navigation_settings_row(
                     .push(image(function_image).height(64))
                     .push(widget::Column::new()
                         .spacing(10)
-                        .push(widget::Text::new(navigation_display_name(function_name))
+                        .push(widget::Text::new(motion_display_name(function_name))
                             .font(iced::Font {
                                 weight: iced::font::Weight::Semibold,
                                 ..Default::default()
@@ -91,9 +91,9 @@ fn navigation_settings_row(
 
     let speed_and_threshold_column = widget::Column::new()
         .spacing(10)
-        .push(navigation_settings_speed_row(Clone::clone(&profile_id), function_name, function_settings.speed))
-        .push(navigation_settings_threshold_row(Clone::clone(&profile_id), function_name, function_settings.threshold))
-        .push(navigation_settings_inverted_and_disabled_row(profile_id, function_name, function_settings.inverted, function_settings.disabled));
+        .push(motion_settings_speed_row(Clone::clone(&profile_id), function_name, function_settings.speed))
+        .push(motion_settings_threshold_row(Clone::clone(&profile_id), function_name, function_settings.threshold))
+        .push(motion_settings_inverted_and_disabled_row(profile_id, function_name, function_settings.inverted, function_settings.disabled));
 
     widget::Container::new(
         widget::Row::new()
@@ -109,7 +109,7 @@ fn navigation_settings_row(
         .into()
 }
 
-fn navigation_settings_speed_row(profile: ProfileId, axis: NavigationFunctionName, speed: f32) -> Element<'static, Message> {
+fn motion_settings_speed_row(profile: ProfileId, axis: MotionFunctionName, speed: f32) -> Element<'static, Message> {
     let on_release = {
         let profile = Clone::clone(&profile);
         move || Message::UpdateAxisSpeed { profile_id: Clone::clone(&profile), function_name: axis }
@@ -131,7 +131,7 @@ fn navigation_settings_speed_row(profile: ProfileId, axis: NavigationFunctionNam
         .into()
 }
 
-fn navigation_settings_threshold_row(profile_id: ProfileId, axis: NavigationFunctionName, threshold: u8) -> Element<'static, Message> {
+fn motion_settings_threshold_row(profile_id: ProfileId, axis: MotionFunctionName, threshold: u8) -> Element<'static, Message> {
     let on_release = {
         let profile_id = Clone::clone(&profile_id);
         move || Message::UpdateAxisThreshold { profile_id: Clone::clone(&profile_id), function_name: axis }
@@ -153,7 +153,7 @@ fn navigation_settings_threshold_row(profile_id: ProfileId, axis: NavigationFunc
         .into()
 }
 
-fn navigation_settings_inverted_and_disabled_row(profile_id: ProfileId, function_name: NavigationFunctionName, inverted: bool, disabled: bool) -> Element<'static, Message> {
+fn motion_settings_inverted_and_disabled_row(profile_id: ProfileId, function_name: MotionFunctionName, inverted: bool, disabled: bool) -> Element<'static, Message> {
 
     let on_toggle_inverted = {
         let profile_id = Clone::clone(&profile_id);
@@ -204,13 +204,13 @@ where
         .into()
 }
 
-fn navigation_display_name(navigation_name: NavigationFunctionName) -> String {
-    match navigation_name {
-        NavigationFunctionName::LeftRight => String::from("Left / Right"),
-        NavigationFunctionName::UpDown => String::from("Up / Down"),
-        NavigationFunctionName::FwdBwd => String::from("Forward / Backward"),
-        NavigationFunctionName::Pitch => String::from("Pitch"),
-        NavigationFunctionName::Yaw => String::from("Yaw"),
-        NavigationFunctionName::Roll => String::from("Roll"),
+fn motion_display_name(name: MotionFunctionName) -> String {
+    match name {
+        MotionFunctionName::LeftRight => String::from("Left / Right"),
+        MotionFunctionName::UpDown => String::from("Up / Down"),
+        MotionFunctionName::FwdBwd => String::from("Forward / Backward"),
+        MotionFunctionName::Pitch => String::from("Pitch"),
+        MotionFunctionName::Yaw => String::from("Yaw"),
+        MotionFunctionName::Roll => String::from("Roll"),
     }
 }

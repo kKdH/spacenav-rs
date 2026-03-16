@@ -60,7 +60,7 @@ pub struct Profile {
     #[cfg_attr(feature = "serde", serde(default))]
     pub icon: ProfileIcon,
     #[cfg_attr(feature = "serde", serde(default))]
-    pub navigation: BTreeMap<NavigationFunctionName, NavigationFunctionSettings>,
+    pub motions: BTreeMap<MotionFunctionName, MotionFunctionSettings>,
     #[cfg_attr(feature = "serde", serde(default))]
     pub keybindings: Vec<Keybinding>,
 }
@@ -70,7 +70,7 @@ impl Profile {
         Self {
             name,
             icon: ProfileIcon::None,
-            navigation: BTreeMap::new(),
+            motions: BTreeMap::new(),
             keybindings: Vec::new(),
         }
     }
@@ -87,7 +87,7 @@ pub enum ProfileIcon {
 
 #[derive(Clone, Copy, Debug, Ord, PartialOrd, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum NavigationFunctionName {
+pub enum MotionFunctionName {
     LeftRight,
     UpDown,
     FwdBwd,
@@ -96,21 +96,21 @@ pub enum NavigationFunctionName {
     Roll,
 }
 
-impl NavigationFunctionName {
+impl MotionFunctionName {
 
-    pub const NAVIGATION_FUNCTION_NAMES: &'static [NavigationFunctionName] = &[
-        NavigationFunctionName::LeftRight,
-        NavigationFunctionName::UpDown,
-        NavigationFunctionName::FwdBwd,
-        NavigationFunctionName::Pitch,
-        NavigationFunctionName::Yaw,
-        NavigationFunctionName::Roll,
+    pub const MOTION_FUNCTION_NAMES: &'static [MotionFunctionName] = &[
+        MotionFunctionName::LeftRight,
+        MotionFunctionName::UpDown,
+        MotionFunctionName::FwdBwd,
+        MotionFunctionName::Pitch,
+        MotionFunctionName::Yaw,
+        MotionFunctionName::Roll,
     ];
 }
 
 #[derive(Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct NavigationFunctionSettings {
+pub struct MotionFunctionSettings {
     pub axis: u8,
     pub speed: f32,
     pub threshold: u8,

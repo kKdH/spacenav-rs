@@ -8,7 +8,7 @@ use iced::{widget, Task};
 use iced::{Element, Subscription};
 use iced_toaster::{Toast, ToastId, ToastLevel, Toaster};
 use spacenav_client::SpaceNavClient;
-use spacenav_settings::{NavigationFunctionName, Profile, ProfileId, Profiles};
+use spacenav_settings::{MotionFunctionName, Profile, ProfileId, Profiles};
 use std::collections::BTreeMap;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
@@ -29,7 +29,7 @@ pub struct SpaceNavCockpit {
 
 #[derive(Debug, Clone, Copy)]
 pub enum ProfileConfigurationView {
-    Navigation,
+    Motions,
     Keybindings,
 }
 
@@ -53,18 +53,18 @@ pub enum Message {
     ClientGetDeviceEvent(Result<libspnav::Device, ()>),
     ClientSetAxesSpeedEvent(Result<(), ()>),
     ProfileSelected(ProfileId),
-    ProfileNavigationConfigurationViewActivated(ProfileId),
+    ProfileMotionsConfigurationViewActivated(ProfileId),
     ProfileKeybindingsConfigurationViewActivated(ProfileId),
     PushToast(Toast<Message>),
     DismissToast(ToastId),
     SetHoveredToast(ToastId, bool),
-    AxisSpeedChanged { profile_id: ProfileId, function_name: NavigationFunctionName, speed: f32 },
-    UpdateAxisSpeed { profile_id: ProfileId, function_name: NavigationFunctionName },
-    AxisThresholdChanged { profile_id: ProfileId, function_name: NavigationFunctionName, threshold: u8 },
-    AxisInvertedChanged { profile_id: ProfileId, function_name: NavigationFunctionName, inverted: bool },
-    AxisDisabledChanged { profile_id: ProfileId, function_name: NavigationFunctionName, disabled: bool },
-    UpdateAxisThreshold { profile_id: ProfileId, function_name: NavigationFunctionName },
-    AxisMappingChanged { profile_id: ProfileId, function_name: NavigationFunctionName, axis: u8 },
+    AxisSpeedChanged { profile_id: ProfileId, function_name: MotionFunctionName, speed: f32 },
+    UpdateAxisSpeed { profile_id: ProfileId, function_name: MotionFunctionName },
+    AxisThresholdChanged { profile_id: ProfileId, function_name: MotionFunctionName, threshold: u8 },
+    AxisInvertedChanged { profile_id: ProfileId, function_name: MotionFunctionName, inverted: bool },
+    AxisDisabledChanged { profile_id: ProfileId, function_name: MotionFunctionName, disabled: bool },
+    UpdateAxisThreshold { profile_id: ProfileId, function_name: MotionFunctionName },
+    AxisMappingChanged { profile_id: ProfileId, function_name: MotionFunctionName, axis: u8 },
     KeybindingNameChanged { profile_id: ProfileId, keybinding: usize, name: String },
     KeybindingSelectProfileChanged { profile_id: ProfileId, keybinding: usize, select: Option<ProfileId> },
     KeybindingButtonChanged { profile_id: ProfileId, keybinding: usize, button: Option<u8> },
@@ -79,7 +79,7 @@ impl SpaceNavCockpit {
             state: State::Disconnected,
             profiles: Profiles::default(),
             selected_profile: None,
-            active_profile_configuration_view: ProfileConfigurationView::Navigation,
+            active_profile_configuration_view: ProfileConfigurationView::Motions,
             device: None,
             axes_values: [0_f32; 6],
             toaster: iced_toaster::toaster(),
@@ -244,8 +244,8 @@ impl SpaceNavCockpit {
                         // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
                         if let Some(profile) = self.selected_profile.as_ref().and_then(|profile_id| self.profiles.profiles.get(profile_id)) {
                             let values = [event.x as f32, event.y as f32, event.z as f32, event.rx as f32, event.ry as f32, event.rz as f32];
-                            NavigationFunctionName::NAVIGATION_FUNCTION_NAMES.iter()
-                                .flat_map(|function_name| profile.navigation.get(function_name))
+                            MotionFunctionName::MOTION_FUNCTION_NAMES.iter()
+                                .flat_map(|function_name| profile.motions.get(function_name))
                                 .map(|function_settings| function_settings.axis as usize)
                                 .zip(values.into_iter())
                                 .for_each(|(axis, value)| {
@@ -271,8 +271,8 @@ impl SpaceNavCockpit {
                     Task::none()
                 }
             }
-            Message::ProfileNavigationConfigurationViewActivated(_profile_id) => {
-                self.active_profile_configuration_view = ProfileConfigurationView::Navigation;
+            Message::ProfileMotionsConfigurationViewActivated(_profile_id) => {
+                self.active_profile_configuration_view = ProfileConfigurationView::Motions;
                 Task::none()
             }
             Message::ProfileKeybindingsConfigurationViewActivated(_profile_id) => {
@@ -293,7 +293,7 @@ impl SpaceNavCockpit {
             }
             Message::AxisSpeedChanged { profile_id, function_name, speed } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
-                    if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
+                    if let Some(function_settings) = profile.motions.get_mut(&function_name) {
                         let speed = speed.max(0_f32).min(2_f32);
                         let speed = (speed * 100_f32).round() / 100_f32;
                         function_settings.speed = speed;
@@ -306,7 +306,7 @@ impl SpaceNavCockpit {
             }
             Message::AxisThresholdChanged { profile_id, function_name, threshold } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
-                    if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
+                    if let Some(function_settings) = profile.motions.get_mut(&function_name) {
                         function_settings.threshold = threshold;
                     }
                 }
@@ -317,7 +317,7 @@ impl SpaceNavCockpit {
             }
             Message::AxisInvertedChanged { profile_id, function_name, inverted: invert } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
-                    if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
+                    if let Some(function_settings) = profile.motions.get_mut(&function_name) {
                         function_settings.inverted = invert;
                     }
                 }
@@ -325,7 +325,7 @@ impl SpaceNavCockpit {
             }
             Message::AxisDisabledChanged { profile_id, function_name, disabled } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
-                    if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
+                    if let Some(function_settings) = profile.motions.get_mut(&function_name) {
                         function_settings.disabled = disabled;
                     }
                 }
@@ -333,7 +333,7 @@ impl SpaceNavCockpit {
             }
             Message::AxisMappingChanged { profile_id, function_name, axis } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
-                    if let Some(function_settings) = profile.navigation.get_mut(&function_name) {
+                    if let Some(function_settings) = profile.motions.get_mut(&function_name) {
                         function_settings.axis = axis;
                     }
                 }
@@ -367,7 +367,7 @@ impl SpaceNavCockpit {
 
         // TODO: This will fail if there are more or less than 6 axes.
         // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
-        let speed: [f32; 6] = profile.navigation.values()
+        let speed: [f32; 6] = profile.motions.values()
             .map(|function_settings| if function_settings.disabled { 0_f32 } else { function_settings.speed })
             .collect::<Vec<_>>()
             .try_into()
@@ -392,7 +392,7 @@ impl SpaceNavCockpit {
 
         // TODO: This will fail if there are more or less than 6 axes.
         // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
-        let threshold: [u8; 6] = profile.navigation.values()
+        let threshold: [u8; 6] = profile.motions.values()
             .map(|function_settings| function_settings.threshold)
             .collect::<Vec<_>>()
             .try_into()
@@ -417,7 +417,7 @@ impl SpaceNavCockpit {
 
         // TODO: This will fail if there are more or less than 6 axes.
         // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
-        let inverted: [bool; 6] = profile.navigation.values()
+        let inverted: [bool; 6] = profile.motions.values()
             .map(|function_settings| function_settings.inverted)
             .collect::<Vec<_>>()
             .try_into()
@@ -442,7 +442,7 @@ impl SpaceNavCockpit {
 
         // TODO: This will fail if there are more or less than 6 axes.
         // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
-        let mapping: [u8; 6] = profile.navigation.values()
+        let mapping: [u8; 6] = profile.motions.values()
             .map(|function_settings| function_settings.axis)
             .collect::<Vec<_>>()
             .try_into()

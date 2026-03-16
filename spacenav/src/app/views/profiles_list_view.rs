@@ -85,7 +85,7 @@ fn profiles_list_item(
             .push(
                 widget::Row::new()
                     .width(iced::Fill)
-                    .push(profile_navigation_configuration_button(profile_id, active_configuration_view))
+                    .push(profile_motions_configuration_button(profile_id, active_configuration_view))
                     .push(profile_keybindings_configuration_button(profile_id, active_configuration_view))
             );
     }
@@ -115,9 +115,9 @@ fn profile_icon(icon: Option<image::Handle>) -> Element<'static, Message> {
         .into()
 }
 
-fn profile_navigation_configuration_button(profile_id: &ProfileId, active_configuration_view: ProfileConfigurationView) -> Element<'static, Message> {
-    let active = matches!(active_configuration_view, ProfileConfigurationView::Navigation);
-    profile_button(String::from("Navigation"), 0, active, || Message::ProfileNavigationConfigurationViewActivated(Clone::clone(profile_id)))
+fn profile_motions_configuration_button(profile_id: &ProfileId, active_configuration_view: ProfileConfigurationView) -> Element<'static, Message> {
+    let active = matches!(active_configuration_view, ProfileConfigurationView::Motions);
+    profile_button(String::from("Motions"), 0, active, || Message::ProfileMotionsConfigurationViewActivated(Clone::clone(profile_id)))
 }
 
 fn profile_keybindings_configuration_button(profile_id: &ProfileId, active_configuration_view: ProfileConfigurationView) -> Element<'static, Message> {
