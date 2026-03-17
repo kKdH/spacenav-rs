@@ -3,7 +3,7 @@ use crate::app::views::BORDER_RADIUS;
 use crate::app::SpaceNavCockpit;
 use iced::alignment::Vertical;
 use iced::{border, widget, Alignment, Element, Fill, Theme};
-use spacenav_settings::{Keybinding, Profile, ProfileId};
+use spacenav_settings::{Keybinding, KeybindingButton, Profile, ProfileId};
 use std::fmt::Formatter;
 
 pub fn profile_keybindings_configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
@@ -40,11 +40,11 @@ fn keybindings_list_item<'a>(
 {
     let (header, view) = match keybinding {
         (keybinding, Keybinding::SelectProfile { profile, button }) =>
-            keybinding_select_profile(profile_id, keybinding, profile, *button, app),
+            keybinding_select_profile(profile_id, keybinding, profile, button, app),
         (keybinding, Keybinding::PreviousProfile { button }) =>
-            keybinding_previous_profile(profile_id, keybinding, *button),
+            keybinding_previous_profile(profile_id, keybinding, button),
         (keybinding, Keybinding::NextProfile { button }) =>
-            keybinding_next_profile(profile_id, keybinding, *button),
+            keybinding_next_profile(profile_id, keybinding, button),
     };
     let header = widget::container::Container::new(header)
         .padding([4, 10])
@@ -73,7 +73,7 @@ fn keybinding_select_profile<'a>(
     profile_id: &'a ProfileId,
     keybinding: usize,
     selected_profile: &'a Option<ProfileId>,
-    selected_button: Option<u8>,
+    selected_button: &'a Option<KeybindingButton>,
     app: &'a SpaceNavCockpit
 ) -> (Element<'a, Message>, Element<'a, Message>)
 {
@@ -101,19 +101,19 @@ fn keybinding_select_profile<'a>(
     (header.into(), view.into())
 }
 
-fn keybinding_previous_profile(profile_id: &ProfileId, keybinding: usize, button: Option<u8>) -> (Element<'_, Message>, Element<'_, Message>) {
+fn keybinding_previous_profile<'a>(profile_id: &'a ProfileId, keybinding: usize, button: &'a Option<KeybindingButton>) -> (Element<'a, Message>, Element<'a, Message>) {
     let header = widget::Text::new("Select Previous Profile");
     let view = keybinding_button_row(profile_id, keybinding, button);
     (header.into(), view.into())
 }
 
-fn keybinding_next_profile(profile_id: &ProfileId, keybinding: usize, button: Option<u8>) -> (Element<'_, Message>, Element<'_, Message>) {
+fn keybinding_next_profile<'a>(profile_id: &'a ProfileId, keybinding: usize, button: &'a Option<KeybindingButton>) -> (Element<'a, Message>, Element<'a, Message>) {
     let header = widget::Text::new("Select Next Profile");
     let view = keybinding_button_row(profile_id, keybinding, button);
     (header.into(), view.into())
 }
 
-fn keybinding_button_row(profile_id: &ProfileId, keybinding: usize, button: Option<u8>) -> Element<'_, Message> {
+fn keybinding_button_row<'a>(profile_id: &'a ProfileId, keybinding: usize, button: &'a Option<KeybindingButton>) -> Element<'a, Message> {
     let buttons = vec![0_u8, 1, 2, 3, 4, 5, 6, 7, 8, 9];
     widget::Row::new()
         .spacing(10)
@@ -121,7 +121,7 @@ fn keybinding_button_row(profile_id: &ProfileId, keybinding: usize, button: Opti
         .push(widget::Text::new("Button:")
             .width(100)
             .align_x(Alignment::End))
-        .push(widget::PickList::new(buttons, button, move |button| Message::KeybindingButtonChanged { profile_id: Clone::clone(&profile_id.clone()), keybinding, button: Some(button) }))
+        .push(widget::PickList::new(buttons, button.as_ref().map(|button| button.number), move |button| Message::KeybindingButtonChanged { profile_id: Clone::clone(&profile_id.clone()), keybinding, button: Some(button) }))
         .into()
 }
 

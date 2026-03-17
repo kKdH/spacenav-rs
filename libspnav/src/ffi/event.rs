@@ -22,10 +22,16 @@ pub struct MotionEvent {
     pub period: u32,
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct ButtonEvent {
-    pub pressed: bool,
     pub button: i32,
+    pub state: ButtonState,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq)]
+pub enum ButtonState {
+    Pressed,
+    Released,
 }
 
 #[derive(Debug, Clone)]
@@ -89,7 +95,7 @@ fn button_event_from_c(event: &libspnav::spnav_event) -> ButtonEvent {
     unsafe {
         assert!(event.type_ as u32 == libspnav::SPNAV_EVENT_BUTTON || event.type_ as u32 == libspnav::SPNAV_EVENT_RAWBUTTON);
         ButtonEvent {
-            pressed: c_int_to_bool(event.button.press),
+            state: if c_int_to_bool(event.button.press) { ButtonState::Pressed } else { ButtonState::Released },
             button: event.button.bnum,
         }
     }

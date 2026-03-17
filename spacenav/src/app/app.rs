@@ -8,10 +8,11 @@ use iced::{widget, Task};
 use iced::{Element, Subscription};
 use iced_toaster::{Toast, ToastId, ToastLevel, Toaster};
 use spacenav_client::SpaceNavClient;
-use spacenav_settings::{Keybinding, MotionFunctionName, Profile, ProfileId, Profiles};
+use spacenav_settings::{Keybinding, KeybindingButton, KeybindingButtonState, MotionFunctionName, Profile, ProfileId, Profiles};
 use std::collections::BTreeMap;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
+use tracing::error;
 use views::footer_view;
 
 pub struct SpaceNavCockpit {
@@ -25,6 +26,7 @@ pub struct SpaceNavCockpit {
     pub toaster: Toaster<Message>,
     pub image_handles: ImageHandles,
     pub profiles_icon_handles: BTreeMap<ProfileId, Handle>,
+    pub last_button_event: Option<libspnav::ButtonEvent>,
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -67,6 +69,7 @@ pub enum Message {
     AxisMappingChanged { profile_id: ProfileId, function_name: MotionFunctionName, axis: u8 },
     KeybindingSelectProfileChanged { profile_id: ProfileId, keybinding: usize, select: Option<ProfileId> },
     KeybindingButtonChanged { profile_id: ProfileId, keybinding: usize, button: Option<u8> },
+    FireKeyEvent { profile_id: ProfileId, keybinding: usize },
     Tick,
 }
 
@@ -84,6 +87,7 @@ impl SpaceNavCockpit {
             toaster: iced_toaster::toaster(),
             image_handles: ImageHandles::new(),
             profiles_icon_handles: BTreeMap::new(),
+            last_button_event: None,
         }
     }
 
@@ -238,23 +242,7 @@ impl SpaceNavCockpit {
                 Task::none()
             }
             Message::ClientEvent(event) => {
-                match event {
-                    libspnav::Event::Motion(event) => {
-                        // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
-                        if let Some(profile) = self.selected_profile.as_ref().and_then(|profile_id| self.profiles.profiles.get(profile_id)) {
-                            let values = [event.x as f32, event.y as f32, event.z as f32, event.rx as f32, event.ry as f32, event.rz as f32];
-                            MotionFunctionName::MOTION_FUNCTION_NAMES.iter()
-                                .flat_map(|function_name| profile.motions.get(function_name))
-                                .map(|function_settings| function_settings.axis as usize)
-                                .zip(values.into_iter())
-                                .for_each(|(axis, value)| {
-                                    self.axes_values[axis] = value;
-                                });
-                        }
-                    }
-                    _ => {}
-                }
-                Task::none()
+                self.handle_client_event(event)
             }
             Message::ProfileSelected(profile_id) => {
                 if self.selected_profile.as_ref().is_none_or(|p| p != &profile_id) {
@@ -350,7 +338,7 @@ impl SpaceNavCockpit {
             Message::KeybindingButtonChanged { profile_id, keybinding, button } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(keybinding) = profile.keybindings.get_mut(keybinding) {
-                        let new_button = button;
+                        let new_button = button.map(|number| KeybindingButton::new(number, KeybindingButtonState::Released));
                         match keybinding {
                             Keybinding::SelectProfile { button, .. } => *button = new_button,
                             Keybinding::PreviousProfile { button } => *button = new_button,
@@ -359,6 +347,23 @@ impl SpaceNavCockpit {
                     }
                 }
                 Task::none()
+            }
+            Message::FireKeyEvent { profile_id, keybinding } => {
+                if let Some(profile) = self.profiles.profiles.get(&profile_id) {
+                    match profile.keybindings.get(keybinding) {
+                        None => {
+                            error!("There is no keybinding '{keybinding}' for profile '{profile_id}'!");
+                            Task::none()
+                        },
+                        Some(Keybinding::SelectProfile { profile: Some(profile_id), .. }) => {
+                            Task::done(Message::ProfileSelected(Clone::clone(&profile_id)))
+                        }
+                        _ => Task::none()
+                    }
+                }
+                else {
+                    Task::none()
+                }
             }
             Message::Tick => {
                 self.toaster.dismiss_expired();
@@ -465,6 +470,65 @@ impl SpaceNavCockpit {
             .set_axes_mapping(mapping);
 
         Task::perform(set_axes_mapping, Message::ClientSetAxesSpeedEvent)
+    }
+
+    fn handle_client_event(&mut self, event: libspnav::Event) -> Task<Message> {
+
+        match event {
+            libspnav::Event::Motion(event) =>
+                self.handle_client_motion_event(event),
+            libspnav::Event::Button(event) =>
+                self.handle_client_button_event(event),
+            _ => Task::none(),
+        }
+    }
+
+    fn handle_client_motion_event(&mut self, event: libspnav::MotionEvent) -> Task<Message> {
+        // TODO: Verify the ordering of the axes (tx, ty, tz, rx, ry, rz).
+        if let Some(profile) = self.selected_profile.as_ref().and_then(|profile_id| self.profiles.profiles.get(profile_id)) {
+            let values = [event.x as f32, event.y as f32, event.z as f32, event.rx as f32, event.ry as f32, event.rz as f32];
+            MotionFunctionName::MOTION_FUNCTION_NAMES.iter()
+                .flat_map(|function_name| profile.motions.get(function_name))
+                .map(|function_settings| function_settings.axis as usize)
+                .zip(values.into_iter())
+                .for_each(|(axis, value)| {
+                    self.axes_values[axis] = value;
+                });
+        }
+
+        Task::none()
+    }
+
+    fn handle_client_button_event(&mut self, event: libspnav::ButtonEvent) -> Task<Message> {
+
+        // Filter consecutive events for the same button with the same state.
+        if let Some(previous_button_event) = self.last_button_event.as_ref() {
+            if previous_button_event == &event {
+                return Task::none();
+            }
+        }
+
+        let libspnav::ButtonEvent { button: event_button_number, state: event_button_state } = event;
+        self.last_button_event = Some(event);
+
+        if let Some(selected_profile_id) = self.selected_profile.as_ref() {
+            if let Some(selected_profile) = self.profiles.profiles.get(selected_profile_id) {
+                let tasks = selected_profile.keybindings.iter()
+                    .filter(|keybinding| keybinding.button().is_some_and(|button| {
+                        button.number as i32 == event_button_number &&
+                        (
+                            matches!(button.state, KeybindingButtonState::Released) && matches!(event_button_state, libspnav::ButtonState::Released) ||
+                            matches!(button.state, KeybindingButtonState::Pressed) && matches!(event_button_state, libspnav::ButtonState::Pressed)
+                        )
+                    }))
+                    .enumerate()
+                    .map(|(keybinding, _)| Task::done(Message::FireKeyEvent { profile_id: Clone::clone(&selected_profile_id), keybinding }))
+                    .collect::<Vec<_>>();
+                return Task::batch(tasks);
+            }
+        }
+
+        Task::none()
     }
 
     pub fn view(&self) -> Element<'_, Message> {

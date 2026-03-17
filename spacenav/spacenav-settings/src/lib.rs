@@ -4,7 +4,7 @@ mod settings;
 use std::fmt::Formatter;
 use std::path::PathBuf;
 
-pub use profiles::{MotionFunctionName, MotionFunctionSettings, Profile, ProfileIcon, ProfileId, Profiles, Keybinding};
+pub use profiles::{MotionFunctionName, MotionFunctionSettings, Profile, ProfileIcon, ProfileId, Profiles, Keybinding, KeybindingButton, KeybindingButtonState};
 pub use settings::Settings;
 
 #[cfg(feature = "toml")]

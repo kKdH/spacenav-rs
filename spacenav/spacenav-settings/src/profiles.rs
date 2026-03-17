@@ -126,7 +126,43 @@ pub struct MotionFunctionSettings {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[cfg_attr(feature = "serde", serde(tag = "type"))]
 pub enum Keybinding {
-    SelectProfile { profile: Option<ProfileId>, button: Option<u8> },
-    PreviousProfile { button: Option<u8> },
-    NextProfile { button: Option<u8> },
+    SelectProfile { profile: Option<ProfileId>, #[serde(flatten)] button: Option<KeybindingButton> },
+    PreviousProfile { #[serde(flatten)] button: Option<KeybindingButton> },
+    NextProfile { #[serde(flatten)] button: Option<KeybindingButton> },
+}
+
+impl Keybinding {
+
+    pub fn button(&self) -> Option<&KeybindingButton> {
+        match self {
+            Keybinding::SelectProfile { button, .. } => button.as_ref(),
+            Keybinding::PreviousProfile { button } => button.as_ref(),
+            Keybinding::NextProfile { button } => button.as_ref(),
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct KeybindingButton {
+    #[serde(alias = "button", rename = "button")]
+    pub number: u8,
+    pub state: KeybindingButtonState
+}
+
+impl KeybindingButton {
+
+    pub fn new(number: u8, state: KeybindingButtonState) -> Self {
+        Self {
+            number,
+            state,
+        }
+    }
+}
+
+#[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub enum KeybindingButtonState {
+    Pressed,
+    Released,
 }
