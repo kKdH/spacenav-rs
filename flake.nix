@@ -36,6 +36,7 @@
           libxrandr
           wayland
           libxkbcommon
+          libclang
         ];
       in
       {
