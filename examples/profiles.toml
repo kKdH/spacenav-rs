@@ -1,0 +1,109 @@
+[profiles.freecad]
+name = "FreeCAD"
+variant = "default"
+
+[profiles.freecad.icon]
+path = "./icons/AppIcon_FreeCAD.webp"
+
+[profiles.freecad.motions.LeftRight]
+axis = 0
+speed = 3.0
+threshold = 1
+inverted = true
+disabled = false
+
+[profiles.freecad.motions.UpDown]
+axis = 2
+speed = 2.5
+threshold = 1
+inverted = false
+disabled = false
+
+[profiles.freecad.motions.FwdBwd]
+axis = 1
+speed = 2.5
+threshold = 1
+inverted = true
+disabled = false
+
+[profiles.freecad.motions.Pitch]
+axis = 3
+speed = 2.5
+threshold = 1
+inverted = true
+disabled = false
+
+[profiles.freecad.motions.Yaw]
+axis = 5
+speed = 1.0
+threshold = 1
+inverted = false
+disabled = false
+
+[profiles.freecad.motions.Roll]
+axis = 4
+speed = 1.5
+threshold = 1
+inverted = true
+disabled = false
+
+[[profiles.freecad.keybindings]]
+type = "SelectProfile"
+profile = "freecad_skt"
+button = 1
+state = "Released"
+
+[profiles.freecad_skt]
+name = "FreeCAD"
+variant = "sketching"
+
+[profiles.freecad_skt.icon]
+path = "./icons/AppIcon_FreeCAD.webp"
+
+[profiles.freecad_skt.motions.LeftRight]
+axis = 0
+speed = 3.0
+threshold = 1
+inverted = true
+disabled = false
+
+[profiles.freecad_skt.motions.UpDown]
+axis = 2
+speed = 2.5
+threshold = 1
+inverted = false
+disabled = false
+
+[profiles.freecad_skt.motions.FwdBwd]
+axis = 1
+speed = 2.5
+threshold = 1
+inverted = true
+disabled = false
+
+[profiles.freecad_skt.motions.Pitch]
+axis = 3
+speed = 2.5
+threshold = 1
+inverted = true
+disabled = true
+
+[profiles.freecad_skt.motions.Yaw]
+axis = 5
+speed = 1.0
+threshold = 1
+inverted = false
+disabled = true
+
+[profiles.freecad_skt.motions.Roll]
+axis = 4
+speed = 1.5
+threshold = 1
+inverted = true
+disabled = true
+
+[[profiles.freecad_skt.keybindings]]
+type = "SelectProfile"
+profile = "freecad"
+button = 1
+state = "Released"
