@@ -8,6 +8,7 @@ use iced::widget::text::Wrapping;
 use iced::{border, widget, Alignment, Element, Fill, Padding};
 use spacenav_settings::{MotionFunctionName, MotionFunctionSettings, ProfileId};
 use std::ops::RangeInclusive;
+use iced::widget::text_input::Catalog;
 
 pub fn profile_motion_configuration_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
 
@@ -122,12 +123,13 @@ fn motion_settings_speed_row(profile: ProfileId, axis: MotionFunctionName, speed
             .align_x(Alignment::End)
         )
         .push(slider(
-            0_f32..=2_f32,
+            0_f32..=5_f32,
             speed,
             0.01,
             move |speed| Message::AxisSpeedChanged { profile_id: Clone::clone(&profile), function_name: axis, speed },
             on_release
         ))
+        .push(input(speed.to_string()))
         .into()
 }
 
@@ -150,6 +152,7 @@ fn motion_settings_threshold_row(profile_id: ProfileId, axis: MotionFunctionName
             move |threshold| Message::AxisThresholdChanged { profile_id: Clone::clone(&profile_id), function_name: axis, threshold },
             on_release
         ))
+        .push(input(threshold.to_string()))
         .into()
 }
 
@@ -201,8 +204,28 @@ where
             style.rail.backgrounds = (theme.palette().background.into(), theme.palette().background.into());
             style
         })
+        .width(iced::Fill)
         .into()
 }
+
+fn input(
+    value: String,
+) -> Element<'static, Message>
+{
+    widget::TextInput::new(&value, &value)
+        .align_x(Alignment::Center)
+        .style(|theme: &iced::Theme, status| widget::text_input::Style {
+            border: iced::Border {
+                radius: 20.0.into(),
+                width: 1.0,
+                color: theme.extended_palette().background.strong.color,
+            },
+            ..widget::text_input::default(theme, status)
+        })
+        .width(54)
+        .into()
+}
+
 
 fn motion_display_name(name: MotionFunctionName) -> String {
     match name {

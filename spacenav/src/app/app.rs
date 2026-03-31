@@ -281,7 +281,7 @@ impl SpaceNavCockpit {
             Message::AxisSpeedChanged { profile_id, function_name, speed } => {
                 if let Some(profile) = self.profiles.profiles.get_mut(&profile_id) {
                     if let Some(function_settings) = profile.motions.get_mut(&function_name) {
-                        let speed = speed.max(0_f32).min(2_f32);
+                        let speed = speed.max(0_f32).min(5_f32);
                         let speed = (speed * 100_f32).round() / 100_f32;
                         function_settings.speed = speed;
                     }
