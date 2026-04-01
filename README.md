@@ -1,1 +1,3 @@
-# spacenav-rs
+# SpaceNav Cockpit
+
+![screenshot](doc/screenshot.png)
