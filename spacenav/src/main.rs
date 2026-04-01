@@ -34,7 +34,7 @@ fn main() -> Result<(), iced::Error> {
                 application_id: String::from("spacenav"),
                 ..Default::default()
             },
-            min_size: Some(Size::new(900_f32, 840_f32)),
+            min_size: Some(Size::new(900_f32, 860_f32)),
             icon: Some(window::icon::from_file_data(APP_ICON, Some(ImageFormat::WebP))
                 .expect("Failed to load embedded app icon")
             ),

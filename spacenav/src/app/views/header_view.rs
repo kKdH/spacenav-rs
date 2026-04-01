@@ -59,7 +59,7 @@ pub fn header_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
                             .color(color!(255, 255, 255))
                     )
                     .style(rounded_button_style)
-                    .on_press(Message::LoadSettings)
+                    .on_press(Message::AskBeforeLoadSettings)
                 )
                 .push(
                     widget::button(
@@ -68,7 +68,7 @@ pub fn header_view(app: &SpaceNavCockpit) -> Element<'_, Message> {
                             .color(color!(255, 255, 255))
                     )
                     .style(rounded_button_style)
-                    .on_press(Message::StoreSettings)
+                    .on_press(Message::AskBeforeStoreSettings)
                 )
                 .push(widget::Space::new().width(Fill))
                 .push(widget::Column::new()

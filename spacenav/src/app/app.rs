@@ -1,10 +1,9 @@
 use crate::app::views;
 use crate::app::views::{header_view, profiles_view};
 use crate::assets::ImageHandles;
-use crate::util::{load_profiles, load_profile_icons, store_profiles};
-use iced::widget::container;
+use crate::util::{load_profile_icons, load_profiles, store_profiles};
 use iced::widget::image::Handle;
-use iced::{widget, Task};
+use iced::{widget, Task, Theme};
 use iced::{Element, Subscription};
 use iced_toaster::{Toast, ToastId, ToastLevel, Toaster};
 use spacenav_client::SpaceNavClient;
@@ -27,9 +26,10 @@ pub struct SpaceNavCockpit {
     pub image_handles: ImageHandles,
     pub profiles_icon_handles: BTreeMap<ProfileId, Handle>,
     pub last_button_event: Option<libspnav::ButtonEvent>,
+    pub modal: Modal,
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub enum ProfileConfigurationView {
     Motions,
     Keybindings,
@@ -42,9 +42,18 @@ pub enum State {
     Connected,
 }
 
+#[derive(Clone, Copy, Debug)]
+pub enum Modal {
+    None,
+    AskBeforeStoreDialog,
+    AskBeforeLoadDialog,
+}
+
 #[derive(Debug, Clone)]
 pub enum Message {
+    AskBeforeLoadSettings,
     LoadSettings,
+    AskBeforeStoreSettings,
     StoreSettings,
     Connect,
     Disconnect,
@@ -70,6 +79,8 @@ pub enum Message {
     KeybindingSelectProfileChanged { profile_id: ProfileId, keybinding: usize, select: Option<ProfileId> },
     KeybindingButtonChanged { profile_id: ProfileId, keybinding: usize, button: Option<u8> },
     FireKeyEvent { profile_id: ProfileId, keybinding: usize },
+    ShowModal { modal: Modal },
+    DismissModal,
     Tick,
 }
 
@@ -88,6 +99,7 @@ impl SpaceNavCockpit {
             image_handles: ImageHandles::new(),
             profiles_icon_handles: BTreeMap::new(),
             last_button_event: None,
+            modal: Modal::None,
         }
     }
 
@@ -100,6 +112,10 @@ impl SpaceNavCockpit {
 
     pub fn update(&mut self, message: Message) -> Task<Message> {
         match message {
+            Message::AskBeforeLoadSettings => {
+                self.modal = Modal::AskBeforeLoadDialog;
+                Task::none()
+            }
             Message::LoadSettings => {
                 match load_profiles() {
                     Ok(mut profiles) => {
@@ -125,9 +141,15 @@ impl SpaceNavCockpit {
                     }
                 }
                 let first = self.profiles.profiles.keys().next().expect("There should be at least one profile.");
+                self.modal = Modal::None; // TODO: Always close a modal?
                 Task::done(Message::ProfileSelected(first.to_owned()))
             }
+            Message::AskBeforeStoreSettings => {
+                self.modal = Modal::AskBeforeStoreDialog;
+                Task::none()
+            }
             Message::StoreSettings => {
+                self.modal = Modal::None; // TODO: Always close a modal?
                 match store_profiles(&self.profiles) {
                     Ok(_) => {
                         self.toaster.push(iced_toaster::toast("Settings stored successfully.")
@@ -365,6 +387,14 @@ impl SpaceNavCockpit {
                     Task::none()
                 }
             }
+            Message::ShowModal { modal } => {
+                self.modal = modal;
+                Task::none()
+            }
+            Message::DismissModal => {
+                self.modal = Modal::None;
+                Task::none()
+            }
             Message::Tick => {
                 self.toaster.dismiss_expired();
                 Task::none()
@@ -533,14 +563,144 @@ impl SpaceNavCockpit {
 
     pub fn view(&self) -> Element<'_, Message> {
 
-        let content = container(
+        let main = widget::container(
             widget::Column::new()
                 .push(header_view(self))
                 .push(profiles_view(self))
                 .push(footer_view(self))
+        );
+
+        let view_stack = widget::Stack::new()
+            .push(main);
+
+        let view_stack = match self.modal {
+            Modal::None => {
+                view_stack
+            }
+            Modal::AskBeforeStoreDialog => {
+                view_stack.push(self.ask_for_store_dialog())
+            }
+            Modal::AskBeforeLoadDialog => {
+                view_stack.push(self.ask_for_load_dialog())
+            }
+        };
+
+        self.toaster
+            .view(view_stack, Message::DismissToast, Message::SetHoveredToast)
+    }
+
+    fn ask_for_store_dialog(&self) -> Element<'_, Message> {
+
+        let content = widget::Column::new()
+            .width(350)
+            .spacing(10)
+            .push(widget::Column::new()
+                .spacing(10)
+                .push(widget::text(String::from("Are you sure you want to save your settings?"))
+                    .font(iced::Font {
+                        weight: iced::font::Weight::Semibold,
+                        ..Default::default()
+                    })
+                )
+                .push(widget::text(String::from("This will overwrite your saved settings on disk with the current configurations.")))
+            )
+            .push(widget::Space::new().height(20))
+            .push(widget::Column::new()
+                .width(iced::Fill)
+                .align_x(iced::alignment::Horizontal::Right)
+                .push(widget::Row::new()
+                    .spacing(10)
+                    .push(widget::button(widget::text("Save Settings"))
+                        .on_press(Message::StoreSettings)
+                    )
+                    .push(widget::button(widget::text("Cancel"))
+                        .on_press(Message::DismissModal)
+                    )
+                )
             );
 
-            self.toaster
-                .view(content, Message::DismissToast, Message::SetHoveredToast)
+        self.dialog(content)
+    }
+
+    fn ask_for_load_dialog(&self) -> Element<'_, Message> {
+
+        let content = widget::Column::new()
+            .width(320)
+            .spacing(10)
+            .push(widget::Column::new()
+                .spacing(10)
+                .push(widget::text(String::from("Are you sure you want to load settings?"))
+                    .font(iced::Font {
+                        weight: iced::font::Weight::Semibold,
+                        ..Default::default()
+                    })
+                )
+                .push(widget::text(String::from("Any unsaved changes will be discarded.")))
+            )
+            .push(widget::Space::new().height(20))
+            .push(widget::Column::new()
+                .width(iced::Fill)
+                .align_x(iced::alignment::Horizontal::Right)
+                .push(widget::Row::new()
+                    .spacing(10)
+                    .push(widget::button(widget::text("Load Settings"))
+                        .on_press(Message::LoadSettings)
+                    )
+                    .push(widget::button(widget::text("Cancel"))
+                        .on_press(Message::DismissModal)
+                    )
+                )
+            );
+
+        self.dialog(content)
+    }
+
+    fn dialog<'a>(
+        &self,
+        content: impl Into<Element<'a, Message>>,
+    ) -> Element<'a, Message>
+    {
+        let content = widget::container(content)
+            .padding(30)
+            .style(|theme: &Theme| {
+                widget::container::Style {
+                    background: Some(theme.palette().background.into()),
+                    border: iced::Border {
+                        width: 2.0,
+                        color: theme.extended_palette().background.weak.color.into(),
+                        radius: iced::border::Radius::new(10),
+                    },
+                    ..widget::container::Style::default()
+                }
+            });
+
+        self.modal(content, Message::DismissModal)
+    }
+
+    fn modal<'a, Message>(
+        &self,
+        content: impl Into<Element<'a, Message>>,
+        on_blur: Message,
+    ) -> Element<'a, Message>
+    where
+        Message: Clone + 'a,
+    {
+        widget::opaque(
+            widget::mouse_area(widget::center(widget::opaque(content))
+                .style(|_theme| {
+                    widget::container::Style {
+                        background: Some(
+                            iced::Color {
+                                a: 0.8,
+                                ..iced::Color::BLACK
+                            }
+                            .into(),
+                        ),
+                        ..widget::container::Style::default()
+                    }
+                })
+            )
+            .on_press(on_blur)
+        )
     }
 }
