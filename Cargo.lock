@@ -3825,7 +3825,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "spacenav"
+name = "spacenav-client"
+version = "0.1.0"
+dependencies = [
+ "libspnav",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "spacenav-cockpit"
 version = "0.1.0"
 dependencies = [
  "directories",
@@ -3845,15 +3854,6 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "tracing-subscriber",
-]
-
-[[package]]
-name = "spacenav-client"
-version = "0.1.0"
-dependencies = [
- "libspnav",
- "tokio",
- "tracing",
 ]
 
 [[package]]

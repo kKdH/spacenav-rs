@@ -5,22 +5,22 @@ repository = "https://github.com/kKdH/spacenav-rs"
 keywords = []
 categories = []
 edition = "2024"
-rust-version = "1.93.1"
+rust-version = "1.94.1"
 license = "Apache-2.0"
 
 [workspace]
 resolver = "3"
 members = [
     "libspnav",
-    "spacenav",
-    "spacenav/spacenav-settings",
+    "spacenav-cockpit",
+    "spacenav-cockpit/spacenav-settings",
 ]
 
 [workspace.dependencies]
 libspnav = { path = "libspnav" }
-spacenav = { path = "spacenav" }
-spacenav-settings = { path = "spacenav/spacenav-settings" }
-spacenav-client = { path = "spacenav/spacenav-client" }
+spacenav-cockpit = { path = "spacenav-cockpit" }
+spacenav-settings = { path = "spacenav-cockpit/spacenav-settings" }
+spacenav-client = { path = "spacenav-cockpit/spacenav-client" }
 
 directories = { version = "6.0.*"}
 futures = { version = "0.3.*" }

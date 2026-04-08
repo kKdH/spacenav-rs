@@ -12,7 +12,7 @@
   };
 
   outputs =
-    { ... }@inputs:
+    inputs:
     inputs.flake-utils.lib.eachDefaultSystem (
       system:
       let
@@ -40,6 +40,7 @@
         ];
       in
       {
+        packages.default = pkgs.callPackage ./package.nix { inherit craneLib; };
         devShells.default = craneLib.devShell {
           inherit buildInputs;
           packages = with pkgs; [
@@ -52,7 +53,7 @@
           LIBCLANG_PATH = "${pkgs.lib.getLib pkgs.libclang}/lib";
           LD_LIBRARY_PATH = builtins.foldl' (a: b: "${a}:${b}/lib") "${pkgs.vulkan-loader}/lib" buildInputs;
         };
-        formatter = pkgs.nixfmt-rfc-style;
+        formatter = pkgs.nixfmt;
       }
     );
 }

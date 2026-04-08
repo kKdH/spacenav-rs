@@ -1,5 +1,5 @@
 [package]
-name = "spacenav"
+name = "spacenav-cockpit"
 readme = "../README.md"
 publish = false
 version.workspace = true
