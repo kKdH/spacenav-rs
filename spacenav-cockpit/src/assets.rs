@@ -1,6 +1,6 @@
 use iced::widget::image;
 
-pub const APP_ICON: &[u8] = include_bytes!("../assets/app-icon.webp");
+pub const APP_ICON: &[u8] = include_bytes!("../assets/app-icon_256x256.webp");
 
 pub const MOTION_FWD_BWD_IMAGE: &[u8] = include_bytes!("../assets/fwd-bwd.webp");
 pub const MOTION_LEFT_RIGHT_IMAGE: &[u8] = include_bytes!("../assets/left-right.webp");

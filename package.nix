@@ -13,7 +13,7 @@ let
     filter =
       let
         filterCSources = path: _type: builtins.match ".*(c|h)$" path != null;
-        filterAssets = path: _type: builtins.match ".*webp$" path != null;
+        filterAssets = path: _type: builtins.match ".*(webp|png)$" path != null;
 
         allFilters = [
           craneLib.filterCargoSources
@@ -60,6 +60,24 @@ craneLib.buildPackage (
     nativeBuildInputs = with pkgs; [
       makeWrapper
     ];
+
+    postInstall = ''
+      # Install app icon file
+      install -Dm444 spacenav-cockpit/assets/app-icon_256x256.png \
+        $out/share/icons/hicolor/256x256/apps/spacenav-cockpit.png
+      # Install the desktop file
+      mkdir -p $out/share/applications
+      cat > $out/share/applications/${pname}.desktop << EOF
+      [Desktop Entry]
+      Type=Application
+      Name=SpaceNav Cockpit
+      Comment=Application to comfortably change spacenav daemon's settings.
+      Exec=$out/bin/${pname}
+      Icon=${pname}
+      Categories=Utility;
+      Terminal=false
+      EOF
+    '';
 
     postFixup = ''
       wrapProgram $out/bin/${pname} \
