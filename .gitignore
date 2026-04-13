@@ -7,3 +7,7 @@
 # Nix
 .direnv/
 result
+
+# Krita
+.webp~
+.png~

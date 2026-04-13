@@ -1,3 +1,52 @@
+[profiles.blender]
+name = "Blender"
+keybindings = []
+
+[profiles.blender.icon]
+path = "./icons/AppIcon_Blender.png"
+
+[profiles.blender.motions.LeftRight]
+axis = 0
+speed = 3.0
+threshold = 1
+inverted = true
+disabled = false
+
+[profiles.blender.motions.UpDown]
+axis = 1
+speed = 2.5
+threshold = 1
+inverted = true
+disabled = false
+
+[profiles.blender.motions.FwdBwd]
+axis = 2
+speed = 2.5
+threshold = 1
+inverted = true
+disabled = false
+
+[profiles.blender.motions.Pitch]
+axis = 3
+speed = 2.5
+threshold = 1
+inverted = true
+disabled = false
+
+[profiles.blender.motions.Yaw]
+axis = 4
+speed = 2.5
+threshold = 1
+inverted = true
+disabled = false
+
+[profiles.blender.motions.Roll]
+axis = 5
+speed = 1.0
+threshold = 1
+inverted = true
+disabled = true
+
 [profiles.freecad]
 name = "FreeCAD"
 variant = "default"
@@ -34,15 +83,15 @@ inverted = true
 disabled = false
 
 [profiles.freecad.motions.Yaw]
-axis = 5
+axis = 4
 speed = 1.0
 threshold = 1
-inverted = false
+inverted = true
 disabled = false
 
 [profiles.freecad.motions.Roll]
-axis = 4
-speed = 1.5
+axis = 5
+speed = 3.0
 threshold = 1
 inverted = true
 disabled = false
@@ -62,21 +111,21 @@ path = "./icons/AppIcon_FreeCAD.webp"
 
 [profiles.freecad_skt.motions.LeftRight]
 axis = 0
-speed = 3.0
+speed = 2.25
 threshold = 1
 inverted = true
 disabled = false
 
 [profiles.freecad_skt.motions.UpDown]
-axis = 2
+axis = 1
 speed = 2.5
 threshold = 1
-inverted = false
+inverted = true
 disabled = false
 
 [profiles.freecad_skt.motions.FwdBwd]
-axis = 1
-speed = 2.5
+axis = 2
+speed = 2.25
 threshold = 1
 inverted = true
 disabled = false
