@@ -1,6 +1,6 @@
 /*
 This file is part of libspnav, part of the spacenav project (spacenav.sf.net)
-Copyright (C) 2007-2023 John Tsiombikas <nuclear@member.fsf.org>
+Copyright (C) 2007-2026 John Tsiombikas <nuclear@mutantstargoat.com>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -1113,4 +1113,14 @@ int spnav_cfg_get_repeat(void)
 		return -1;
 	}
 	return rr.data[0];
+}
+
+int spnav_cfg_set_socket(const char *devpath)
+{
+	return spnav_send_str(sock, REQ_SCFG_SOCKET, devpath);
+}
+
+int spnav_cfg_get_socket(char *buf, int bufsz)
+{
+	return request_str(REQ_GCFG_SOCKET, buf, bufsz, TIMEOUT);
 }
