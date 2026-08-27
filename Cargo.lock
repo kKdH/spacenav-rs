@@ -2124,7 +2124,7 @@ dependencies = [
 
 [[package]]
 name = "libspnav"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "bindgen",
  "cc",
@@ -3826,7 +3826,7 @@ dependencies = [
 
 [[package]]
 name = "spacenav-client"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "libspnav",
  "tokio",
@@ -3835,7 +3835,7 @@ dependencies = [
 
 [[package]]
 name = "spacenav-cockpit"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "directories",
  "futures",
@@ -3858,7 +3858,7 @@ dependencies = [
 
 [[package]]
 name = "spacenav-settings"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "googletest",
  "indoc",
