@@ -1,6 +1,6 @@
 /*
 This file is part of libspnav, part of the spacenav project (spacenav.sf.net)
-Copyright (C) 2007-2023 John Tsiombikas <nuclear@member.fsf.org>
+Copyright (C) 2007-2026 John Tsiombikas <nuclear@mutantstargoat.com>
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions are met:
@@ -378,6 +378,9 @@ int spnav_cfg_get_serial(char *buf, int bufsz);
 
 int spnav_cfg_set_repeat(int msec);
 int spnav_cfg_get_repeat(void);
+
+int spnav_cfg_set_socket(const char *spath);
+int spnav_cfg_get_socket(char *buf, int bufsz);
 
 #ifdef __cplusplus
 }

@@ -10,7 +10,7 @@ libpaths = -L/usr/local/lib -L/usr/X11R6/lib -L/opt/homebrew/lib
 
 CC ?= gcc
 AR ?= ar
-CFLAGS = $(opt) $(dbg) -std=c89 $(pic) -pedantic -Wall -fno-strict-aliasing $(incpaths) $(user_cflags)
+CFLAGS = $(cc_cflags) $(opt) $(dbg) $(pic) $(incpaths) $(user_cflags)
 LDFLAGS = $(libpaths) $(user_ldflags) $(xlib) -lm
 
 ifeq ($(shell uname -s), Darwin)
@@ -18,12 +18,11 @@ ifeq ($(shell uname -s), Darwin)
 	shared = -dynamiclib
 else
 	so_major = 0
-	so_minor = 4
+	so_minor = 5
 	devlink = lib$(name).so
 	soname = $(devlink).$(so_major)
 	lib_so = $(soname).$(so_minor)
 	shared = -shared -Wl,-soname,$(soname)
-	pic = -fPIC
 endif
 
 
